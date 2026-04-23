@@ -1,0 +1,2357 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>OrbitGuard v3 — Satellite Collision Avoidance</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
+<style>
+:root{--bg:#020b14;--panel:#0a1628;--border:#1e3a5f;--blue:#3b82f6;--green:#22c55e;--red:#ef4444;--orange:#f97316;--yellow:#eab308;--purple:#a855f7;--cyan:#22d3ee;--text:#e2e8f0;--muted:#64748b;--mono:'JetBrains Mono',monospace}
+*{box-sizing:border-box;margin:0;padding:0}html,body{height:100%;background:var(--bg);color:var(--text);font-family:'Segoe UI',system-ui,sans-serif;font-size:14px;overflow:hidden}
+.app{display:flex;height:100vh}.sidebar{width:212px;min-width:212px;background:var(--panel);border-right:1px solid var(--border);display:flex;flex-direction:column;flex-shrink:0}
+.main{flex:1;overflow-y:auto;display:flex;flex-direction:column;min-width:0}
+.logo{padding:14px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px}
+.logo-m{width:30px;height:30px;background:linear-gradient(135deg,#1e3a5f,#3b82f6);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0}
+.logo-t{font-weight:700;font-size:13px}.logo-s{font-size:9px;color:var(--muted);letter-spacing:1px}
+.api-pill{margin:8px 10px;padding:5px 10px;border-radius:6px;display:flex;align-items:center;gap:6px;font-size:11px;font-weight:600}
+.ok{background:#22c55e15;border:1px solid #22c55e30;color:#4ade80}.err{background:#ef444415;border:1px solid #ef444430;color:#f87171}
+.pulse{width:7px;height:7px;border-radius:50%;flex-shrink:0}.pg{background:#22c55e;animation:pulse 2s infinite}.pr{background:#ef4444}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+.nav{flex:1;padding:6px;overflow-y:auto}
+.ni{display:flex;align-items:center;gap:8px;padding:9px 10px;border-radius:7px;cursor:pointer;color:var(--muted);transition:all .12s;margin-bottom:1px;border:1px solid transparent;font-size:12px;user-select:none}
+.ni:hover{background:#ffffff08;color:var(--text)}.ni.active{background:#3b82f620;color:var(--blue);border-color:#3b82f640}
+.ni-i{font-size:14px;width:17px;text-align:center;flex-shrink:0}
+.topbar{height:44px;border-bottom:1px solid var(--border);background:var(--panel);display:flex;align-items:center;justify-content:space-between;padding:0 16px;flex-shrink:0}
+.tbt{font-size:14px;font-weight:600}.tbr{display:flex;align-items:center;gap:10px;font-size:11px;color:var(--muted)}
+.page{display:none;flex:1;padding:16px;flex-direction:column;gap:13px;overflow-y:auto}.page.active{display:flex}
+.card{background:var(--panel);border:1px solid var(--border);border-radius:10px;padding:13px}
+.ct{font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;margin-bottom:11px}
+.sg{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+.sc{background:var(--panel);border:1px solid var(--border);border-radius:10px;padding:13px 15px}
+.sl{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:5px}
+.sv{font-size:24px;font-weight:700}.ss{font-size:10px;color:var(--muted);margin-top:3px}
+.fg{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.fg2{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.fl{display:flex;flex-direction:column;gap:3px}.lb{font-size:10px;color:var(--muted);font-weight:500}
+input.fi,select.fi,textarea.fi{background:#020b14;border:1px solid var(--border);border-radius:6px;padding:6px 8px;color:var(--text);font-size:12px;outline:none;transition:border .12s;width:100%}
+input.fi:focus,select.fi:focus{border-color:var(--blue)}
+textarea.fi{font-family:var(--mono);font-size:10px;resize:vertical;min-height:40px}
+.btn{display:inline-flex;align-items:center;gap:5px;padding:7px 14px;border-radius:7px;border:none;cursor:pointer;font-size:12px;font-weight:500;transition:all .12s}
+.bp{background:var(--blue);color:#fff}.bp:hover{background:#2563eb}.bp:disabled{opacity:.5;cursor:not-allowed}
+.bg{background:#16a34a;color:#fff}.bo{background:transparent;border:1px solid var(--border);color:var(--text)}.bo:hover{background:#ffffff08}
+.bsm{padding:5px 9px;font-size:11px}
+.badge{display:inline-block;padding:2px 7px;border-radius:8px;font-size:10px;font-weight:700;text-transform:uppercase}
+.b-CRITICAL{background:#ef444420;color:#f87171;border:1px solid #ef444440}
+.b-HIGH{background:#f9731620;color:#fb923c;border:1px solid #f9731640}
+.b-MEDIUM{background:#eab30820;color:#fbbf24;border:1px solid #eab30840}
+.b-LOW{background:#22c55e20;color:#4ade80;border:1px solid #22c55e40}
+.b-NONE{background:#33406020;color:#64748b;border:1px solid #33406040}
+table{width:100%;border-collapse:collapse}th{text-align:left;padding:8px 10px;font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;border-bottom:1px solid var(--border)}
+td{padding:8px 10px;border-bottom:1px solid #1e3a5f20;font-size:12px}tr:hover td{background:#ffffff03}
+.tc{cursor:pointer}.tw{overflow-x:auto}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:13px}
+.three{display:grid;grid-template-columns:1fr 1fr 1fr;gap:11px}
+.kvg{display:grid;grid-template-columns:auto 1fr;gap:3px 12px;font-size:11px}
+.kvg dt{color:var(--muted)}.kvg dd{color:var(--text);font-family:var(--mono);font-size:10px;word-break:break-all}
+.alert{padding:10px 13px;border-radius:7px;font-size:12px;display:flex;align-items:flex-start;gap:8px;line-height:1.5}
+.ar{background:#ef444415;border:1px solid #ef444440}.ag{background:#22c55e15;border:1px solid #22c55e40}.ab{background:#3b82f615;border:1px solid #3b82f640}.ay{background:#eab30815;border:1px solid #eab30840}
+.loader{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;padding:40px;color:var(--muted)}
+.spinner{width:28px;height:28px;border:3px solid #1e3a5f;border-top-color:var(--blue);border-radius:50%;animation:spin 1s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.tabs{display:flex;gap:2px;border-bottom:1px solid var(--border);margin-bottom:12px}
+.tab{padding:6px 12px;cursor:pointer;font-size:11px;color:var(--muted);border-bottom:2px solid transparent;transition:all .12s}
+.tab.active{color:var(--blue);border-color:var(--blue)}
+.tp{display:none}.tp.active{display:block}
+.pc{background:#020b14;border:1px solid var(--border);border-radius:7px;padding:11px;margin-bottom:6px;cursor:pointer;transition:border .12s}
+.pc:hover,.pc.sel{border-color:var(--blue)}.pc.rec{border-color:#22c55e50}
+.ch{position:relative;height:190px}
+.scroll{max-height:300px;overflow-y:auto;padding-right:3px}
+.scroll::-webkit-scrollbar{width:3px}.scroll::-webkit-scrollbar-thumb{background:#1e3a5f;border-radius:2px}
+.sh{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:var(--muted);padding:5px 0 4px;border-bottom:1px solid var(--border);margin-bottom:9px}
+.pb{height:3px;background:#1e3a5f;border-radius:2px;overflow:hidden}
+.pf{height:100%;border-radius:2px;background:var(--blue);transition:width .3s}
+@keyframes fi{from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:none}}
+.fa{animation:fi .25s ease}
+/* Viewer */
+#three-canvas{width:100%;display:block}
+.compare-wrap{display:none;grid-template-columns:1fr 1fr;gap:10px;padding:10px 12px;background:#020b14;border-top:1px solid var(--border)}
+.cmp-card{background:#061322;border:1px solid #1e3a5f;border-radius:8px;padding:8px}
+.cmp-title{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;margin-bottom:6px}
+.cmp-title.bad{color:#f87171}.cmp-title.good{color:#4ade80}
+.cmp-canvas{width:100%;height:170px;display:block;border-radius:6px;background:#020b14}
+.cmp-meta{margin-top:6px;font-size:10px;font-family:var(--mono);color:#cbd5e1}
+.cmp-badge{display:inline-block;padding:2px 6px;border-radius:10px;border:1px solid #334155;margin-right:6px}
+.sctl{display:flex;align-items:center;gap:8px;padding:10px 12px;border-top:1px solid var(--border);background:#020b14;flex-wrap:wrap}
+.scrub{flex:1;min-width:100px;accent-color:var(--blue)}
+.stl{font-size:10px;color:var(--muted);font-family:var(--mono);min-width:55px}
+.sleg{display:flex;gap:10px;flex-wrap:wrap;font-size:10px}
+.sli{display:flex;align-items:center;gap:4px}
+.slc{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+.bb{background:#f9731620;border:1px solid #f9731640;color:#fb923c;padding:2px 7px;border-radius:4px;font-size:9px;font-weight:700;display:none}
+.bb.on{display:inline-block;animation:pulse .5s infinite}
+/* Orbit legend */
+.oleg{display:flex;gap:10px;flex-wrap:wrap;font-size:11px}
+.oli{display:flex;align-items:center;gap:5px}
+.oll{width:18px;height:2px;border-radius:1px}
+/* RL info box */
+.rl-box{background:#020b14;border:1px solid #a855f730;border-radius:8px;padding:11px}
+.rl-title{font-size:10px;font-weight:700;color:var(--purple);text-transform:uppercase;letter-spacing:.6px;margin-bottom:7px}
+@keyframes slideDown{from{opacity:0;transform:translateX(-50%) translateY(-10px)}to{opacity:1;transform:translateX(-50%) translateY(0)}}
+/* Watchlist countdown */
+.wl-item{background:#020b14;border:1px solid var(--border);border-radius:8px;padding:11px;margin-bottom:7px;display:flex;align-items:center;gap:12px;transition:border .15s}
+.wl-item.critical{border-color:#ef444460}.wl-item.high{border-color:#f9731660}
+.countdown{font-family:var(--mono);font-size:18px;font-weight:700;min-width:70px;text-align:center}
+/* Fleet grid */
+.fleet-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.fleet-card{background:#020b14;border:1px solid var(--border);border-radius:8px;padding:10px;cursor:pointer;transition:border .15s}
+.fleet-card:hover,.fleet-card.sel{border-color:var(--blue)}
+/* Kessler gauge */
+.gauge-wrap{position:relative;width:160px;height:80px;margin:0 auto}
+/* Narrative box */
+.narr{background:#020b14;border-left:3px solid var(--blue);padding:10px 13px;border-radius:0 7px 7px 0;font-size:12px;line-height:1.65;color:#cbd5e1;margin-bottom:8px}
+.narr-title{font-size:10px;font-weight:700;color:var(--blue);text-transform:uppercase;letter-spacing:.5px;margin-bottom:5px}
+.narr-critical{border-left-color:var(--red)}.narr-high{border-left-color:var(--orange)}.narr-conclusion{border-left-color:var(--green)}
+</style>
+</head>
+<body>
+<div class="app">
+<nav class="sidebar">
+  <div class="logo">
+    <div class="logo-m">🛸</div>
+    <div><div class="logo-t">ORBITGUARD</div><div class="logo-s">COLLISION AVOIDANCE v3</div></div>
+  </div>
+  <div class="api-pill ok" id="apill"><div class="pulse pg" id="pdot"></div><span id="ptxt">Connecting…</span></div>
+  <div class="nav">
+    <div class="ni active" onclick="gp('dashboard')"><span class="ni-i">📡</span>Dashboard</div>
+    <div class="ni" onclick="gp('simulate')"><span class="ni-i">🚀</span>Run Simulation</div>
+    <div class="ni" onclick="gp('viewer')"><span class="ni-i">🎬</span>Live Simulation</div>
+    <div class="ni" onclick="gp('report')"><span class="ni-i">📋</span>Full Report</div>
+    <div class="ni" onclick="gp('narrative')"><span class="ni-i">📝</span>English Report</div>
+    <div class="ni" onclick="gp('rl')"><span class="ni-i">🤖</span>RL Model Info</div>
+    <div class="ni" onclick="gp('conjunction')"><span class="ni-i">⚡</span>Quick Conjunction</div>
+    <div class="ni" onclick="gp('maneuver')"><span class="ni-i">🔧</span>Maneuver Planner</div>
+    <div class="ni" onclick="gp('watchlist')"><span class="ni-i">👁</span>Watchlist</div>
+    <div class="ni" onclick="gp('kessler')"><span class="ni-i">💥</span>Kessler Risk</div>
+    <div class="ni" onclick="gp('fleet')"><span class="ni-i">🛰</span>Fleet Mode</div>
+  </div>
+  <div style="padding:8px;border-top:1px solid var(--border);font-size:10px;color:var(--muted);text-align:center" id="tle-cnt">Loading…</div>
+</nav>
+
+<div class="main">
+<div class="topbar">
+  <span class="tbt" id="page-title">Mission Control</span>
+  <div class="tbr">
+    <span id="clock"></span>
+    <div id="pw" style="display:none;align-items:center;gap:6px">
+      <div style="width:100px" class="pb"><div class="pf" id="pf" style="width:0%"></div></div>
+      <span id="pm" style="font-size:10px;color:var(--muted)"></span>
+    </div>
+  </div>
+</div>
+
+<!-- DASHBOARD -->
+<div class="page active" id="page-dashboard">
+  <div class="sg">
+    <div class="sc"><div class="sl">Tracked Objects</div><div class="sv" id="d-tot" style="color:var(--blue)">—</div><div class="ss">TLE catalog</div></div>
+    <div class="sc"><div class="sl">Debris/R.Bodies</div><div class="sv" id="d-deb" style="color:var(--orange)">—</div><div class="ss">In LEO</div></div>
+    <div class="sc"><div class="sl">Reports</div><div class="sv" id="d-rep" style="color:var(--purple)">—</div><div class="ss">This session</div></div>
+    <div class="sc"><div class="sl">Data Source</div><div class="sv" style="font-size:12px;padding-top:8px;color:var(--green)" id="d-src">—</div><div class="ss">CelesTrak TLE</div></div>
+  </div>
+  <div class="two">
+    <div class="card">
+      <div class="ct">Quick Start</div>
+      <p style="color:var(--muted);font-size:12px;line-height:1.5;margin-bottom:11px">Configure your satellite, screen real TLE debris via SGP4 propagation, view live 3D simulation with all orbit rings, get a full English-language mission report and RL maneuver details.</p>
+      <div style="display:flex;gap:7px;flex-wrap:wrap">
+        <button class="btn bp" onclick="loadDemo();gp('simulate')">▶ Run Demo</button>
+        <button class="btn bo" onclick="gp('simulate')">Custom Setup</button>
+      </div>
+    </div>
+    <div class="card"><div class="ct">Recent Simulations</div><div id="d-rec" style="color:var(--muted);font-size:12px">None yet</div></div>
+  </div>
+  <div class="card">
+    <div class="ct">What's New in v3</div>
+    <div class="three" style="font-size:11px">
+      <div style="padding:9px;background:#020b14;border-radius:8px;border:1px solid var(--border)"><div style="font-size:18px;margin-bottom:4px">🛰️</div><strong style="color:var(--blue)">Real TLE SGP4</strong><br><span style="color:var(--muted)">All debris use real SGP4-propagated positions from CelesTrak catalog</span></div>
+      <div style="padding:9px;background:#020b14;border-radius:8px;border:1px solid var(--border)"><div style="font-size:18px;margin-bottom:4px">🌍</div><strong style="color:var(--blue)">All Orbit Rings</strong><br><span style="color:var(--muted)">Live viewer shows every debris orbit ring, color-coded by risk level</span></div>
+      <div style="padding:9px;background:#020b14;border-radius:8px;border:1px solid var(--border)"><div style="font-size:18px;margin-bottom:4px">🤖</div><strong style="color:var(--blue)">PPO RL Model</strong><br><span style="color:var(--muted)">Maneuvers include reward, loss, advantage, policy ratio details</span></div>
+      <div style="padding:9px;background:#020b14;border-radius:8px;border:1px solid var(--border)"><div style="font-size:18px;margin-bottom:4px">📝</div><strong style="color:var(--blue)">English Report</strong><br><span style="color:var(--muted)">Plain-language report explaining distances, risks and maneuver in detail</span></div>
+      <div style="padding:9px;background:#020b14;border-radius:8px;border:1px solid var(--border)"><div style="font-size:18px;margin-bottom:4px">🔥</div><strong style="color:var(--blue)">Burn Visualized</strong><br><span style="color:var(--muted)">New orbit drawn after maneuver burn with element comparison</span></div>
+      <div style="padding:9px;background:#020b14;border-radius:8px;border:1px solid var(--border)"><div style="font-size:18px;margin-bottom:4px">⚡</div><strong style="color:var(--blue)">Non-blocking API</strong><br><span style="color:var(--muted)">Thread pool executor, progress via WebSocket, API never disconnects</span></div>
+    </div>
+  </div>
+</div>
+
+<!-- SIMULATE -->
+<div class="page" id="page-simulate">
+  <div class="card">
+    <div class="ct">Satellite Configuration</div>
+    <div class="tabs">
+      <div class="tab active" onclick="sTab('elem',this)">Orbital Elements</div>
+      <div class="tab" onclick="sTab('tle',this)">Paste TLE</div>
+    </div>
+    <div class="tp active" id="st-elem">
+      <div class="fg">
+        <div class="fl"><label class="lb">Name</label><input class="fi" id="s-name" value="MY-SAT-1"/></div>
+        <div class="fl"><label class="lb">Altitude (km)</label><input class="fi" id="s-alt" type="number" value="550" min="160" max="2000"/></div>
+        <div class="fl"><label class="lb">Inclination (°)</label><input class="fi" id="s-inc" type="number" value="53" min="0" max="360"/></div>
+        <div class="fl"><label class="lb">Eccentricity</label><input class="fi" id="s-ecc" type="number" value="0.001" min="0" max="0.3" step="0.001"/></div>
+        <div class="fl"><label class="lb">RAAN (°)</label><input class="fi" id="s-raan" type="number" value="0" min="0" max="360"/></div>
+        <div class="fl"><label class="lb">True Anomaly (°)</label><input class="fi" id="s-nu" type="number" value="0" min="0" max="360"/></div>
+      </div>
+    </div>
+    <div class="tp" id="st-tle">
+      <div class="fl" style="margin-bottom:6px"><label class="lb">Name</label><input class="fi" id="t-name" placeholder="MY-SATELLITE"/></div>
+      <div class="fl" style="margin-bottom:6px"><label class="lb">TLE Line 1</label><textarea class="fi" id="t-l1" placeholder="1 25544U 98067A ..."></textarea></div>
+      <div class="fl"><label class="lb">TLE Line 2</label><textarea class="fi" id="t-l2" placeholder="2 25544  51.6412 ..."></textarea></div>
+    </div>
+  </div>
+  <div class="two">
+    <div class="card">
+      <div class="ct">Simulation Parameters</div>
+      <div class="fg2">
+        <div class="fl"><label class="lb">Duration (h)</label><input class="fi" id="s-dur" type="number" value="12" min="1" max="48"/></div>
+        <div class="fl"><label class="lb">Max ΔV (m/s)</label><input class="fi" id="s-dv" type="number" value="5" min="0.1" max="50" step="0.1"/></div>
+        <div class="fl"><label class="lb">Satellite Mass (kg)</label><input class="fi" id="s-mass" type="number" value="300"/></div>
+        <div class="fl"><label class="lb">Isp (s)</label><input class="fi" id="s-isp" type="number" value="220"/></div>
+        <div class="fl"><label class="lb">Screen Distance (km)</label><input class="fi" id="s-scr" type="number" value="10"/></div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="ct">Debris Source</div>
+      <label style="display:flex;align-items:center;gap:7px;margin-bottom:7px;cursor:pointer;font-size:12px"><input type="checkbox" id="u-live" checked style="accent-color:var(--blue)"/>Use live TLE catalog (CelesTrak + SGP4)</label>
+      <label style="display:flex;align-items:center;gap:7px;margin-bottom:7px;cursor:pointer;font-size:12px"><input type="checkbox" id="u-scan-all" style="accent-color:var(--orange)"/>🌍 Scan ALL live TLE debris (entire catalog)</label>
+      <div id="scan-all-note" style="display:none;font-size:10px;color:#fb923c;margin-bottom:7px;padding:5px 8px;background:#f9731610;border-radius:5px;border:1px solid #f9731630">⚠ Screens every debris object in the catalog against your satellite. May take 30–120s depending on catalog size.</div>
+      <label style="display:flex;align-items:center;gap:7px;margin-bottom:7px;cursor:pointer;font-size:12px">
+        <input type="checkbox" id="u-force-collision" style="accent-color:#ef4444"/>
+        💥 Force collision demo (injects one guaranteed-collision debris)
+      </label>
+      <div id="n-debris-row">
+        <div class="fl" style="margin-bottom:7px"><label class="lb">Max debris objects to screen (nearby orbit)</label>
+        <input class="fi" id="n-syn" type="number" value="100" min="1" max="5000"/></div>
+      </div>
+      <label style="display:flex;align-items:center;gap:7px;margin-bottom:7px;cursor:pointer;font-size:12px"><input type="checkbox" id="u-synth" style="accent-color:var(--blue)"/>Also add synthetic debris</label>
+      <div id="synth-row" style="display:none"><div class="fl"><label class="lb">N synthetic</label><input class="fi" id="n-syn-extra" type="number" value="8" min="1" max="50"/></div></div>
+      <p style="font-size:10px;color:var(--muted);margin-top:4px">Real SGP4 positions for all TLE objects. <strong style="color:#60a5fa">Nearby mode</strong> auto-selects by altitude ±90km + inclination ±40°. <strong style="color:#fb923c">Full scan</strong> runs PPO against every debris in the catalog.</p>
+    </div>
+  </div>
+  <div style="display:flex;gap:7px;align-items:center;flex-wrap:wrap">
+    <button class="btn bp" id="run-btn" onclick="runSim()">🚀 Run Simulation</button>
+    <button class="btn bo" onclick="loadDemo()">Load Demo</button>
+    <span id="s-msg" style="font-size:11px;color:var(--muted)"></span>
+  </div>
+  <div id="s-load" class="loader" style="display:none">
+    <div class="spinner"></div>
+    <div id="s-lmsg">Starting…</div>
+    <div style="width:180px" class="pb"><div class="pf" id="s-prog" style="width:0%"></div></div>
+  </div>
+</div>
+
+<!-- LIVE VIEWER -->
+<div class="page" id="page-viewer">
+  <div class="card" style="padding:0;border-radius:10px;overflow:visible">
+    <canvas id="three-canvas" style="width:100%;display:block;border-radius:10px 10px 0 0"></canvas>
+    <div id="compare-wrap" class="compare-wrap">
+      <div class="cmp-card">
+        <div class="cmp-title bad">Left: Original orbit (collision risk)</div>
+        <canvas id="compare-left" class="cmp-canvas"></canvas>
+        <div id="compare-left-meta" class="cmp-meta"></div>
+      </div>
+      <div class="cmp-card">
+        <div class="cmp-title good">Right: After burn (collision avoided)</div>
+        <canvas id="compare-right" class="cmp-canvas"></canvas>
+        <div id="compare-right-meta" class="cmp-meta"></div>
+      </div>
+    </div>
+    <div class="sctl" style="border-radius:0 0 10px 10px">
+      <button class="btn bo bsm" id="play-btn" onclick="togglePlay()">⏸ Pause</button>
+      <input type="range" class="scrub" id="scrub" min="0" max="239" value="0" oninput="seekTo(this.value)"/>
+      <span class="stl" id="stl">T+0.0h</span>
+      <select class="fi bsm" style="width:auto;padding:4px 8px" onchange="setSpeed(this.value)">
+        <option value="0.3">0.3×</option><option value="1" selected>1×</option>
+        <option value="3">3×</option><option value="10">10×</option><option value="30">30×</option>
+      </select>
+      <span class="bb" id="bb">🔥 BURN!</span>
+      <div style="flex:1"></div>
+      <div class="sleg">
+        <div class="sli"><div class="slc" style="background:#22c55e"></div>Your Satellite</div>
+        <div class="sli"><div class="slc" style="background:#ef4444"></div>Critical</div>
+        <div class="sli"><div class="slc" style="background:#f97316"></div>High Risk</div>
+        <div class="sli"><div class="slc" style="background:#eab308"></div>Medium</div>
+        <div class="sli"><div class="slc" style="background:#475569"></div>Debris</div>
+      </div>
+    </div>
+  </div>
+  <div id="v-empty" class="card" style="text-align:center;padding:24px;color:var(--muted)">
+    Run a simulation to see live orbit animation
+    <br><button class="btn bp" style="margin-top:10px" onclick="loadDemo();gp('simulate')">▶ Run Demo</button>
+  </div>
+  <div id="v-info" style="display:none">
+    <div class="two">
+      <div class="card">
+        <div class="ct">Orbit Visualization Key</div>
+        <div class="oleg" id="o-leg">
+          <div class="oli"><div class="oll" style="background:#22c55e"></div><span style="color:#4ade80">Your satellite orbit (before maneuver)</span></div>
+        </div>
+        <div id="v-man-info" style="margin-top:10px;display:none">
+          <div style="margin-bottom:7px"><div class="oli"><div class="oll" style="background:#3b82f6;border-top:1px dashed"></div><span style="color:#60a5fa">New orbit after burn</span></div></div>
+          <div><div class="oli"><div class="slc" style="background:#f97316;width:10px;height:10px"></div><span style="color:#fb923c">Burn point location</span></div></div>
+          <div id="v-burn-kv" class="rl-box" style="margin-top:8px">
+            <div class="rl-title">Burn Details</div>
+            <dl class="kvg" id="v-bkv"></dl>
+          </div>
+        </div>
+        <div id="v-safe-note" class="alert ag" style="margin-top:8px;font-size:11px">✅ No maneuver required. All passes are safe.</div>
+      </div>
+      <div class="card" style="display:flex;flex-direction:column;gap:0">
+        <div class="ct" style="display:flex;justify-content:space-between;align-items:center">
+          Live Positions
+          <span style="font-size:9px;background:#1e3a5f;color:#60a5fa;padding:2px 6px;border-radius:4px" id="debris-count-badge">0 orbits</span>
+        </div>
+        <div id="v-pos" style="font-size:10px;font-family:var(--mono);max-height:100px;overflow-y:auto;line-height:1.7;margin-bottom:8px;border-bottom:1px solid var(--border);padding-bottom:8px"></div>
+        <div style="font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:5px">All Debris Orbits</div>
+        <div id="debris-orbit-list" style="max-height:220px;overflow-y:auto;font-size:10px"></div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="ct">Distance to Primary — All Debris Over Time</div>
+      <div class="ch"><canvas id="tl-chart"></canvas></div>
+      <div id="tl-debris-chart-panel" style="display:none;margin-top:14px">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
+          <div class="ct" style="margin:0" id="tl-debris-title">—</div>
+          <button onclick="document.getElementById('tl-debris-chart-panel').style.display='none'" style="background:transparent;border:1px solid var(--border);color:var(--muted);border-radius:4px;padding:2px 8px;cursor:pointer;font-size:11px">✕ Close</button>
+        </div>
+        <div style="position:relative;height:180px"><canvas id="tl-debris-chart"></canvas></div>
+        <div id="tl-debris-stats" style="margin-top:8px;font-size:11px;font-family:var(--mono);display:flex;gap:16px;flex-wrap:wrap"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- FULL REPORT (technical) -->
+<div class="page" id="page-report">
+  <div id="r-empty" class="card" style="text-align:center;padding:30px;color:var(--muted)">
+    <div style="font-size:40px;margin-bottom:8px">📋</div>No report yet
+    <br><button class="btn bp" style="margin-top:10px" onclick="loadDemo();gp('simulate')">▶ Run Demo</button>
+  </div>
+  <div id="r-content" style="display:none">
+    <div class="card fa">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start">
+        <div><div style="font-size:16px;font-weight:700" id="r-title">—</div><div style="color:var(--muted);font-size:11px;margin-top:3px" id="r-meta">—</div></div>
+        <div style="display:flex;gap:6px">
+          <button class="btn bo bsm" onclick="gp('viewer')">🎬 Live Sim</button>
+          <button class="btn bo bsm" onclick="gp('narrative')">📝 English Report</button>
+          <button class="btn bo bsm" onclick="dlReport()">⬇ JSON</button>
+        </div>
+      </div>
+    </div>
+    <div class="sg fa">
+      <div class="sc" style="border-color:#ef444440"><div class="sl">CRITICAL</div><div class="sv" id="r-c" style="color:#f87171">0</div><div class="ss">Pc &gt; 1-in-1,000 (10⁻³) — Immediate maneuver</div></div>
+      <div class="sc" style="border-color:#f9731640"><div class="sl">HIGH</div><div class="sv" id="r-h" style="color:#fb923c">0</div><div class="ss">Pc &gt; 1-in-10,000 (10⁻⁴) — Maneuver recommended</div></div>
+      <div class="sc" style="border-color:#eab30840"><div class="sl">MEDIUM</div><div class="sv" id="r-m" style="color:#fbbf24">0</div><div class="ss">Pc &gt; 1-in-100,000 (10⁻⁵) — Monitor closely</div></div>
+      <div class="sc" style="border-color:#22c55e40"><div class="sl">LOW</div><div class="sv" id="r-l" style="color:#4ade80">0</div><div class="ss">Pc ≤ 1-in-100,000 — Safe pass, routine tracking</div></div>
+    </div>
+    <div class="two fa">
+      <div class="card">
+        <div class="ct">Primary Satellite — Orbital State</div>
+        <dl class="kvg" id="r-ps"></dl>
+      </div>
+      <div class="card">
+        <div class="ct">Simulation Config</div>
+        <dl class="kvg" id="r-cfg"></dl>
+      </div>
+    </div>
+    <div class="card fa">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+        <div class="ct" style="margin-bottom:0">All Conjunction Events</div>
+        <span id="r-cc" style="font-size:11px;color:var(--muted)"></span>
+      </div>
+      <div class="tw">
+        <table><thead><tr><th>Object</th><th>NORAD</th><th>Source</th><th>TCA (h)</th><th>Miss Dist (km)</th><th>Miss (m)</th><th>Rel.Vel (km/s)</th><th>Pc</th><th>Risk</th><th>Action</th></tr></thead>
+        <tbody id="r-tb"></tbody></table>
+      </div>
+    </div>
+    <div id="r-cd" class="card fa" style="display:none">
+      <div class="ct">Conjunction Detail — <span id="r-cdn"></span></div>
+      <div class="two">
+        <div>
+          <div class="sh">Close-Approach Parameters</div>
+          <dl class="kvg" id="r-ckv"></dl>
+          <div style="margin-top:11px"><div class="sh">Primary State at TCA</div><dl class="kvg" id="r-pkv"></dl></div>
+          <div style="margin-top:11px"><div class="sh">Debris State at TCA</div><dl class="kvg" id="r-dkv"></dl></div>
+          <div style="margin-top:11px"><div class="sh">Debris Initial Orbit</div><dl class="kvg" id="r-del"></dl></div>
+        </div>
+        <div><div class="sh">Distance vs Time</div><div class="ch"><canvas id="dist-chart"></canvas></div></div>
+      </div>
+    </div>
+    <div id="r-man" class="card fa" style="display:none">
+      <div class="ct">⚠️ RL-Computed Avoidance Maneuvers</div>
+      <div id="r-mal" style="margin-bottom:11px"></div>
+      <div class="two">
+        <div>
+          <div class="sh">All 6 Direction Strategies</div>
+          <div id="r-plans"></div>
+        </div>
+        <div>
+          <div class="sh">Recommended Plan — Full Details</div>
+          <div id="r-rec"></div>
+          <div style="margin-top:10px"><div class="sh">New Orbit After Burn</div><dl class="kvg" id="r-new-orbit"></dl></div>
+        </div>
+      </div>
+    </div>
+    <div class="card fa"><div class="ct">Simulation Metadata</div><dl class="kvg" id="r-mk"></dl></div>
+  </div>
+</div>
+
+<!-- ENGLISH NARRATIVE REPORT -->
+<div class="page" id="page-narrative">
+  <div id="n-empty" class="card" style="text-align:center;padding:30px;color:var(--muted)">No report yet — run a simulation first.</div>
+  <div id="n-content" style="display:none">
+    <div class="card fa">
+      <div style="font-size:15px;font-weight:700" id="n-title">—</div>
+      <div style="color:var(--muted);font-size:11px;margin-top:2px" id="n-sub">—</div>
+    </div>
+    <div class="card fa">
+      <div class="ct">🛰️ Satellite Description</div>
+      <div class="narr" id="n-sat"></div>
+    </div>
+    <div class="card fa">
+      <div class="ct">📡 Screening Summary</div>
+      <div class="narr" id="n-screen"></div>
+    </div>
+    <div class="card fa">
+      <div class="ct">⚠️ Overall Risk Assessment</div>
+      <div class="narr" id="n-overall"></div>
+    </div>
+    <div class="card fa" id="n-conj-section">
+      <div class="ct">🔍 Conjunction Events — Detailed Analysis</div>
+      <div id="n-conjs"></div>
+    </div>
+    <div class="card fa" id="n-man-section" style="display:none">
+      <div class="ct">🔥 Maneuver Plan — Plain English</div>
+      <div id="n-man-content"></div>
+    </div>
+    <div class="card fa">
+      <div class="ct">✅ Conclusion & Recommended Action</div>
+      <div class="narr narr-conclusion" id="n-conclusion"></div>
+    </div>
+  </div>
+</div>
+
+<!-- RL MODEL INFO -->
+<div class="page" id="page-rl">
+  <div class="card">
+    <div class="ct">🤖 PPO Reinforcement Learning Model</div>
+    <div class="alert ab" style="margin-bottom:12px;font-size:12px">
+      The maneuver optimizer uses a <strong>Proximal Policy Optimization (PPO)</strong> agent trained to maximize post-maneuver miss distance while minimizing fuel consumption. Every maneuver plan includes the reward received, policy loss, and advantage estimate.
+    </div>
+    <div class="two">
+      <div>
+        <div class="sh">Algorithm Details</div>
+        <dl class="kvg" id="rl-details"></dl>
+      </div>
+      <div>
+        <div class="sh">Loss Function</div>
+        <dl class="kvg" id="rl-loss"></dl>
+        <div style="margin-top:11px"><div class="sh">Reward Function</div>
+        <div class="rl-box"><div style="font-family:var(--mono);font-size:11px;color:#a5b4fc;line-height:2.0;white-space:pre-wrap" id="rl-reward"></div></div></div>
+      </div>
+    </div>
+    <div style="margin-top:11px"><div class="sh">State Space (9 dimensions)</div>
+    <div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:4px" id="rl-state"></div></div>
+    <div style="margin-top:11px"><div class="sh">Training Configuration</div>
+    <dl class="kvg" id="rl-train"></dl></div>
+  </div>
+  <div class="card" id="rl-plans-card" style="display:none">
+    <div class="ct">Last Simulation — Plan Rewards & Losses</div>
+    <div id="rl-plans-content"></div>
+  </div>
+</div>
+
+<!-- QUICK CONJUNCTION -->
+<div class="page" id="page-conjunction">
+  <div class="two">
+    <div class="card"><div class="ct">Primary</div><div class="fg2">
+      <div class="fl"><label class="lb">Alt (km)</label><input class="fi" id="qpa" type="number" value="550"/></div>
+      <div class="fl"><label class="lb">Inc (°)</label><input class="fi" id="qpi" type="number" value="53"/></div>
+      <div class="fl"><label class="lb">Ecc</label><input class="fi" id="qpe" type="number" value="0.001" step="0.001"/></div>
+      <div class="fl"><label class="lb">RAAN (°)</label><input class="fi" id="qpr" type="number" value="0"/></div>
+      <div class="fl"><label class="lb">ArgP (°)</label><input class="fi" id="qpg" type="number" value="0"/></div>
+      <div class="fl"><label class="lb">ν (°)</label><input class="fi" id="qpn" type="number" value="0"/></div>
+    </div></div>
+    <div class="card"><div class="ct">Secondary / Debris</div><div class="fg2">
+      <div class="fl"><label class="lb">Alt (km)</label><input class="fi" id="qsa" type="number" value="549"/></div>
+      <div class="fl"><label class="lb">Inc (°) <span style="color:var(--muted);font-size:9px">233=retrograde</span></label><input class="fi" id="qsi" type="number" value="233"/></div>
+      <div class="fl"><label class="lb">Ecc</label><input class="fi" id="qse" type="number" value="0.008" step="0.001"/></div>
+      <div class="fl"><label class="lb">RAAN (°)</label><input class="fi" id="qsr" type="number" value="5"/></div>
+      <div class="fl"><label class="lb">ArgP (°)</label><input class="fi" id="qsg" type="number" value="180"/></div>
+      <div class="fl"><label class="lb">ν (°)</label><input class="fi" id="qsn" type="number" value="45"/></div>
+    </div></div>
+  </div>
+  <div style="display:flex;gap:7px;align-items:center">
+    <div class="fl" style="flex-direction:row;align-items:center;gap:6px"><label class="lb">Duration:</label>
+      <select class="fi" style="width:auto" id="qcd"><option value="6">6h</option><option value="12">12h</option><option value="24" selected>24h</option><option value="48">48h</option></select></div>
+    <button class="btn bp" onclick="runQC()">⚡ Analyze</button>
+  </div>
+  <div id="qc-res" style="display:none" class="fa">
+    <div id="qc-auto" style="display:none;margin-bottom:10px"></div>
+    <div class="two">
+      <div class="card"><div class="ct">Results</div><dl class="kvg" id="qc-kv"></dl><div id="qc-al" style="margin-top:9px"></div></div>
+      <div class="card"><div class="ct">Distance vs Time</div><div class="ch"><canvas id="qc-chart"></canvas></div></div>
+    </div>
+  </div>
+</div>
+
+<!-- MANEUVER PLANNER -->
+<div class="page" id="page-maneuver">
+  <div class="two">
+    <div class="card"><div class="ct">Primary Satellite</div><div class="fg2">
+      <div class="fl"><label class="lb">Alt (km)</label><input class="fi" id="mpa" type="number" value="550"/></div>
+      <div class="fl"><label class="lb">Inc (°)</label><input class="fi" id="mpi" type="number" value="53"/></div>
+      <div class="fl"><label class="lb">RAAN (°)</label><input class="fi" id="mpr" type="number" value="0"/></div>
+      <div class="fl"><label class="lb">ν (°)</label><input class="fi" id="mpn" type="number" value="0"/></div>
+    </div></div>
+    <div class="card"><div class="ct">Threat Object</div><div class="fg2">
+      <div class="fl"><label class="lb">Alt (km)</label><input class="fi" id="mda" type="number" value="549"/></div>
+      <div class="fl"><label class="lb">Inc (°)</label><input class="fi" id="mdi" type="number" value="233"/></div>
+      <div class="fl"><label class="lb">RAAN (°)</label><input class="fi" id="mdr" type="number" value="5"/></div>
+      <div class="fl"><label class="lb">ν (°)</label><input class="fi" id="mdn" type="number" value="45"/></div>
+    </div></div>
+  </div>
+  <div style="display:flex;gap:7px;align-items:center;flex-wrap:wrap">
+    <div class="fl" style="flex-direction:row;align-items:center;gap:5px"><label class="lb">TCA:</label><input class="fi" id="m-tca" type="number" value="6" min="0.1" max="48" step="0.1" style="width:55px"/>h</div>
+    <div class="fl" style="flex-direction:row;align-items:center;gap:5px"><label class="lb">Max ΔV:</label><input class="fi" id="m-dv" type="number" value="5" min="0.1" max="50" step="0.1" style="width:55px"/>m/s</div>
+    <div class="fl" style="flex-direction:row;align-items:center;gap:5px"><label class="lb">Mass:</label><input class="fi" id="m-mass" type="number" value="300" style="width:65px"/>kg</div>
+    <button class="btn bp" onclick="runMan()">🔧 Compute All 6 Strategies</button>
+  </div>
+  <div id="man-res" style="display:none" class="fa">
+    <div class="card"><div class="ct">Nominal Assessment (no maneuver)</div><dl class="kvg" id="mn-nom"></dl></div>
+    <div class="card">
+      <div class="ct">PPO RL — All 6 Direction Strategies</div>
+      <div id="mn-plans"></div>
+    </div>
+  </div>
+</div>
+
+
+<!-- WATCHLIST -->
+<div class="page" id="page-watchlist">
+  <div class="card">
+    <div class="ct">🚨 Autonomous Conjunction Watchlist</div>
+    <div class="alert ab" style="margin-bottom:12px;font-size:11px">
+      The watchlist continuously monitors all screened conjunctions and counts down to each TCA. 
+      When Pc exceeds threshold, maneuver is automatically computed and displayed.
+    </div>
+    <div id="wl-empty" style="color:var(--muted);font-size:12px;padding:16px 0">Run a simulation to populate the watchlist.</div>
+    <div id="wl-list"></div>
+  </div>
+  <div class="card" id="wl-auto-card" style="display:none">
+    <div class="ct">🤖 Auto-computed Maneuvers</div>
+    <div id="wl-auto-plans"></div>
+  </div>
+</div>
+
+<!-- KESSLER RISK -->
+<div class="page" id="page-kessler">
+  <div class="card">
+    <div class="ct">💥 Kessler Syndrome Risk Assessment</div>
+    <div class="alert ay" style="margin-bottom:14px;font-size:11px">
+      Kessler Syndrome occurs when the density of debris in LEO becomes high enough that collisions generate more debris than decays, creating a self-sustaining cascade. This tool estimates the risk for a given orbital shell.
+    </div>
+    <div class="fg">
+      <div class="fl"><label class="lb">Shell altitude (km)</label><input class="fi" id="k-alt" type="number" value="550" min="160" max="2000"/></div>
+      <div class="fl"><label class="lb">Shell width (km)</label><input class="fi" id="k-width" type="number" value="50" min="10" max="200"/></div>
+      <div class="fl"><label class="lb">Avg cross-section (m²)</label><input class="fi" id="k-cs" type="number" value="2.0" step="0.1"/></div>
+      <div class="fl"><label class="lb">Avg object mass (kg)</label><input class="fi" id="k-mass" type="number" value="100"/></div>
+      <div class="fl"><label class="lb">N objects in shell</label><input class="fi" id="k-n" type="number" value="500"/></div>
+      <div class="fl"><label class="lb">Avg relative velocity (km/s)</label><input class="fi" id="k-rv" type="number" value="10" step="0.5"/></div>
+    </div>
+    <button class="btn bp" style="margin-top:10px" onclick="computeKessler()">💥 Compute Kessler Risk</button>
+  </div>
+  <div id="k-result" style="display:none" class="fa">
+    <div class="sg">
+      <div class="sc" id="k-risk-card"><div class="sl">Kessler Risk Level</div><div class="sv" id="k-risk-val">—</div><div class="ss" id="k-risk-sub">—</div></div>
+      <div class="sc"><div class="sl">Collision Rate</div><div class="sv" id="k-rate">—</div><div class="ss">events/year in shell</div></div>
+      <div class="sc"><div class="sl">Critical Density Ratio</div><div class="sv" id="k-crit">—</div><div class="ss">current/critical (>1 = cascade)</div></div>
+      <div class="sc"><div class="sl">Cascade Time</div><div class="sv" id="k-time">—</div><div class="ss">if cascade begins</div></div>
+    </div>
+    <div class="card">
+      <div class="ct">Analysis</div>
+      <div class="narr" id="k-narr"></div>
+      <div style="margin-top:12px"><div class="sh">Collision Energy</div>
+        <dl class="kvg" id="k-energy"></dl></div>
+    </div>
+  </div>
+</div>
+
+
+<!-- FLEET MODE -->
+<div class="page" id="page-fleet">
+  <div class="card">
+    <div class="ct">🛰 Fleet Mode — Multi-Satellite Screening</div>
+    <div class="alert ab" style="margin-bottom:12px;font-size:11px">
+      Add multiple satellites to your fleet. Each is screened against all debris simultaneously. Fleet-level risk dashboard shows which satellites need attention.
+    </div>
+    <div class="two">
+      <div>
+        <div class="sh">Add Satellite to Fleet</div>
+        <div class="fg2">
+          <div class="fl"><label class="lb">Name</label><input class="fi" id="fl-name" value="SAT-A"/></div>
+          <div class="fl"><label class="lb">Altitude (km)</label><input class="fi" id="fl-alt" type="number" value="550"/></div>
+          <div class="fl"><label class="lb">Inc (°)</label><input class="fi" id="fl-inc" type="number" value="53"/></div>
+          <div class="fl"><label class="lb">RAAN (°)</label><input class="fi" id="fl-raan" type="number" value="0"/></div>
+        </div>
+        <div style="display:flex;gap:7px;margin-top:8px">
+          <button class="btn bo bsm" onclick="addToFleet()">+ Add</button>
+          <button class="btn bp bsm" onclick="screenFleet()">🛰 Screen Fleet</button>
+          <button class="btn bo bsm" onclick="clearFleet()">Clear</button>
+        </div>
+      </div>
+      <div>
+        <div class="sh">Current Fleet (<span id="fleet-count">0</span> satellites)</div>
+        <div id="fleet-list" style="max-height:180px;overflow-y:auto"></div>
+      </div>
+    </div>
+  </div>
+  <div id="fleet-results" style="display:none" class="fa">
+    <div class="card">
+      <div class="ct">Fleet Risk Dashboard</div>
+      <div id="fleet-grid" class="fleet-grid"></div>
+    </div>
+    <div class="card" id="fleet-detail" style="display:none">
+      <div class="ct">Selected Satellite — Conjunction Detail</div>
+      <div id="fleet-detail-content"></div>
+    </div>
+  </div>
+</div>
+</div></div>
+
+<script>
+// ═══════════════════════════════════════════════════════
+// STATE
+// ═══════════════════════════════════════════════════════
+const API = 'http://localhost:8000';
+let currentReport = null;
+let ws = null;
+let simTabMode = 'elem';
+// Three.js
+let renderer=null,scene=null,camera=null;
+let animFrames=[], currentFrame=0, playing=true, playSpeed=1, animInt=null;
+let primaryMesh=null, debrisMeshes={};
+let compareAnimInt=null;
+let distChart=null, qcChart=null, tlChart=null;
+let postRescreenPoll=null;
+let activeSimRequestId=null;
+let simProgressPct=0;
+
+const TITLES = {dashboard:'Mission Control',simulate:'Run Simulation',viewer:'Live Simulation',
+  report:'Full Technical Report',narrative:'English Language Report',rl:'RL Model Details',
+  conjunction:'Quick Conjunction',maneuver:'Maneuver Planner',
+  watchlist:'Conjunction Watchlist',kessler:'Kessler Syndrome Risk',
+  fleet:'Fleet Mode'};
+
+// ═══════════════════════════════════════════════════════
+// NAV
+// ═══════════════════════════════════════════════════════
+function gp(id){
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.ni').forEach(n=>n.classList.remove('active'));
+  document.getElementById('page-'+id).classList.add('active');
+  const ni=document.querySelector(`[onclick="gp('${id}')"]`);
+  if(ni) ni.classList.add('active');
+  document.getElementById('page-title').textContent=TITLES[id]||id;
+  if(id==='viewer') initViewer();
+  if(id==='rl') loadRLInfo();
+}
+function sTab(n,el){
+  simTabMode=n;
+  document.querySelectorAll('#page-simulate .tab').forEach(t=>t.classList.remove('active'));
+  document.querySelectorAll('#page-simulate .tp').forEach(t=>t.classList.remove('active'));
+  el.classList.add('active');
+  document.getElementById('st-'+n).classList.add('active');
+}
+document.getElementById('u-synth').addEventListener('change',function(){
+  document.getElementById('synth-row').style.display=this.checked?'block':'none';
+});
+document.getElementById('u-scan-all')?.addEventListener('change',function(){
+  document.getElementById('scan-all-note').style.display=this.checked?'block':'none';
+  document.getElementById('n-debris-row').style.display=this.checked?'none':'block';
+});
+
+// ═══════════════════════════════════════════════════════
+// CLOCK + API
+// ═══════════════════════════════════════════════════════
+setInterval(()=>document.getElementById('clock').textContent=new Date().toUTCString().replace('GMT','UTC'),1000);
+
+async function checkAPI(){
+  try{
+    const r=await fetch(API+'/api/health',{signal:AbortSignal.timeout(4000)});
+    if(r.ok){
+      document.getElementById('apill').className='api-pill ok';
+      document.getElementById('pdot').className='pulse pg';
+      document.getElementById('ptxt').textContent='API connected';
+      loadStats();
+    }else throw new Error();
+  }catch{
+    document.getElementById('apill').className='api-pill err';
+    document.getElementById('pdot').className='pulse pr';
+    document.getElementById('ptxt').textContent='API offline';
+  }
+}
+checkAPI(); setInterval(checkAPI,25000);
+
+async function loadStats(){
+  try{
+    const r=await fetch(API+'/api/stats'); if(!r.ok)return;
+    const d=await r.json();
+    document.getElementById('d-tot').textContent=(d.total||0).toLocaleString();
+    document.getElementById('d-deb').textContent=((d.debris||0)+(d.rocket_bodies||0)).toLocaleString();
+    document.getElementById('d-rep').textContent=(d.stored_reports||0).toLocaleString();
+    document.getElementById('d-src').textContent=d.source||'Fallback';
+    document.getElementById('tle-cnt').textContent=`${d.total||0} objects`;
+    loadRecents();
+  }catch{}
+}
+async function loadRecents(){
+  try{
+    const r=await fetch(API+'/api/reports?limit=5'); if(!r.ok)return;
+    const d=await r.json();
+    if(!d.reports?.length)return;
+    document.getElementById('d-rec').innerHTML=d.reports.map(r=>
+      `<div style="display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid var(--border);font-size:11px">
+        <span>${r.primary_name}</span><span style="color:var(--muted)">${r.n_conjunctions} conj.</span>
+        <span class="badge b-${r.critical>0?'CRITICAL':'LOW'}">${r.critical>0?'CRITICAL':'OK'}</span>
+        <button class="btn bo bsm" onclick="loadReport('${r.sim_id}')">View</button></div>`
+    ).join('');
+    // Restore latest simulation into memory so watchlist survives page reload.
+    if(!currentReport && d.reports[0]?.sim_id){
+      const rr=await fetch(API+'/api/reports/'+d.reports[0].sim_id);
+      if(rr.ok){
+        currentReport=await rr.json();
+        populateWatchlist(currentReport);
+      }
+    }
+  }catch{}
+}
+
+// WebSocket
+function connectWS(){
+  try{
+    ws=new WebSocket('ws://localhost:8000/ws');
+    ws.onmessage=e=>{
+      const d=JSON.parse(e.data);
+      if(d.type==='progress'){
+        if(activeSimRequestId && d.request_id && d.request_id!==activeSimRequestId) return;
+        // Keep progress monotonic to avoid visible jumps/glitches.
+        simProgressPct=Math.max(simProgressPct, Number(d.pct||0));
+        document.getElementById('pw').style.display='flex';
+        document.getElementById('pf').style.width=simProgressPct+'%';
+        document.getElementById('pm').textContent=d.msg||'';
+        document.getElementById('s-prog').style.width=simProgressPct+'%';
+        if(d.msg) document.getElementById('s-lmsg').textContent=d.msg;
+      }
+      if(d.type==='simulation_complete'){
+        if(activeSimRequestId && d.request_id && d.request_id!==activeSimRequestId) return;
+        document.getElementById('pw').style.display='none';
+        simProgressPct=100;
+        document.getElementById('s-prog').style.width='100%';
+      }
+    };
+    ws.onclose=()=>setTimeout(connectWS,3000);
+    ws.onerror=()=>{};
+    setInterval(()=>ws?.readyState===1&&ws.send(JSON.stringify({type:'ping'})),20000);
+  }catch{}
+}
+connectWS();
+
+// ═══════════════════════════════════════════════════════
+// SIMULATION
+// ═══════════════════════════════════════════════════════
+function loadDemo(){
+  document.getElementById('s-name').value='DEMO-SAT-1';
+  document.getElementById('s-alt').value='550';
+  document.getElementById('s-inc').value='53';
+  document.getElementById('s-ecc').value='0.001';
+  document.getElementById('s-raan').value='0';
+  document.getElementById('s-nu').value='0';
+  document.getElementById('s-dur').value='12';
+  document.getElementById('s-dv').value='5';
+  document.getElementById('u-live').checked=false;
+  document.getElementById('u-synth').checked=true;
+  document.getElementById('synth-row').style.display='block';
+  document.getElementById('n-syn').value='8';
+}
+
+async function runSim(){
+  const btn=document.getElementById('run-btn');
+  const ldr=document.getElementById('s-load');
+  btn.disabled=true; ldr.style.display='flex';
+  activeSimRequestId='SIM-'+Date.now()+'-'+Math.random().toString(36).slice(2,8);
+  simProgressPct=0;
+  document.getElementById('s-prog').style.width='0%';
+  document.getElementById('s-lmsg').textContent='Building scenario…';
+
+  const body={
+    satellite_name: document.getElementById('s-name').value||'MY-SAT-1',
+    duration_hours: +document.getElementById('s-dur').value,
+    max_dv_ms:      +document.getElementById('s-dv').value,
+    satellite_mass_kg: +document.getElementById('s-mass').value,
+    satellite_isp_s:   +document.getElementById('s-isp').value,
+    screening_distance_km: +document.getElementById('s-scr').value,
+    use_live_tle: document.getElementById('u-live').checked,
+    use_synthetic: document.getElementById('u-synth').checked,
+    max_live_debris: (+document.getElementById('n-syn').value||200),
+    n_synthetic: document.getElementById('u-synth').checked ? (+document.getElementById('n-syn-extra').value||8) : undefined,
+    scan_all_tle: document.getElementById('u-scan-all')?.checked || false,
+    force_collision_demo: document.getElementById('u-force-collision')?.checked || false,
+    client_request_id: activeSimRequestId,
+  };
+  if(simTabMode==='tle'){
+    const l1=document.getElementById('t-l1').value.trim();
+    const l2=document.getElementById('t-l2').value.trim();
+    if(l1&&l2) body.tle={name:document.getElementById('t-name').value||'CUSTOM',line1:l1,line2:l2};
+  }else{
+    body.elements={altitude_km:+document.getElementById('s-alt').value,
+      inclination_deg:+document.getElementById('s-inc').value,
+      eccentricity:+document.getElementById('s-ecc').value,
+      raan_deg:+document.getElementById('s-raan').value,
+      argp_deg:0,true_anomaly_deg:+document.getElementById('s-nu').value};
+  }
+
+  try{
+    const r=await fetch(API+'/api/simulate',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
+    if(!r.ok){const e=await r.json();throw new Error(JSON.stringify(e.detail||e));}
+    const data=await r.json();
+    processReport(data);
+    gp('viewer');
+    loadStats();
+  }catch(e){alert('Simulation failed:\n'+e.message);}
+  finally{btn.disabled=false; ldr.style.display='none'; activeSimRequestId=null;}
+}
+
+function processReport(data){
+  currentReport=data;
+  renderTechnicalReport(data);
+  renderNarrativeReport(data);
+  loadAnimationData(data);
+  // AUTO-MANEUVER: if collision risk detected, show alert and jump to burn frame
+  autoManeuverAlert(data);
+  startPostRescreenPolling(data);
+}
+
+function startPostRescreenPolling(data){
+  if(postRescreenPoll){ clearInterval(postRescreenPoll); postRescreenPoll=null; }
+  if(!data?.sim_id || data.post_maneuver_rescreen_status!=='pending') return;
+  postRescreenPoll=setInterval(async ()=>{
+    try{
+      const r=await fetch(API+'/api/reports/'+data.sim_id);
+      if(!r.ok) return;
+      const d=await r.json();
+      if(!d || d.sim_id!==data.sim_id) return;
+      currentReport=d;
+      renderTechnicalReport(d);
+      if(d.post_maneuver_rescreen_status!=='pending'){
+        clearInterval(postRescreenPoll); postRescreenPoll=null;
+      }
+    }catch{}
+  }, 2500);
+}
+
+function autoManeuverAlert(data){
+  // Remove any existing auto-alert
+  const old=document.getElementById('auto-alert-banner');
+  if(old) old.remove();
+
+  if(!data.maneuver_needed && data.critical_count===0 && data.high_count===0) return;
+
+  const worst=data.conjunctions?.[0];
+  if(!worst) return;
+
+  // Create floating alert banner
+  const banner=document.createElement('div');
+  banner.id='auto-alert-banner';
+  const isEmergency=data.critical_count>0||worst.risk_level==='CRITICAL';
+  banner.style.cssText=`position:fixed;top:52px;left:50%;transform:translateX(-50%);
+    z-index:9999;background:${isEmergency?'#ef4444':'#f97316'};color:#fff;
+    padding:10px 20px;border-radius:8px;font-size:12px;font-weight:600;
+    box-shadow:0 4px 24px ${isEmergency?'#ef444460':'#f9731660'};
+    display:flex;align-items:center;gap:10px;max-width:700px;
+    animation:slideDown .3s ease`;
+
+  const rec=data.recommended_plan;
+  banner.innerHTML=`
+    <span style="font-size:16px">${isEmergency?'🚨':'⚠️'}</span>
+    <div>
+      <strong>AUTO-MANEUVER TRIGGERED</strong> — ${worst.debris_name} · 
+      ${worst.risk_level} · Pc=${worst.pc_scientific} · Miss=${worst.miss_distance_km}km in ${worst.tca_hours}h
+      ${rec?` | RL recommends: <strong>${rec.direction} ${rec.delta_v_ms}m/s at T+${rec.burn_time_hours}h</strong> (${rec.fuel_kg}kg fuel)`:''}
+    </div>
+    <button onclick="this.parentElement.remove()" style="background:rgba(0,0,0,.2);border:none;color:#fff;padding:3px 8px;border-radius:4px;cursor:pointer;font-size:11px">✕</button>`;
+  document.body.appendChild(banner);
+
+  // Auto-dismiss after 12s
+  setTimeout(()=>banner?.remove(), 12000);
+
+  // Auto-jump to burn frame in viewer
+  const bf=data.animation?.burn_frame;
+  if(bf && bf>0){
+    setTimeout(()=>{
+      currentFrame=Math.max(0,bf-10);
+      document.getElementById('scrub').value=currentFrame;
+      renderFrame(currentFrame,bf);
+    },300);
+  }
+}
+
+// ═══════════════════════════════════════════════════════
+// TECHNICAL REPORT
+// ═══════════════════════════════════════════════════════
+function kv(obj){return Object.entries(obj).map(([k,v])=>`<dt>${k}</dt><dd>${v??'—'}</dd>`).join('');}
+
+function renderTechnicalReport(data){
+  document.getElementById('r-empty').style.display='none';
+  document.getElementById('r-content').style.display='block';
+  document.getElementById('r-title').textContent=`${data.primary_name} — Report #${data.sim_id}`;
+  document.getElementById('r-meta').textContent=
+    `${new Date(data.created_at).toLocaleString()} · ${data.simulation_duration_hours}h window · `+
+    `${data.total_debris_screened} objects screened · ${data.simulation_time_s}s · source: ${data.primary_tle_source}`;
+
+  document.getElementById('r-c').textContent=data.critical_count;
+  document.getElementById('r-h').textContent=data.high_count;
+  document.getElementById('r-m').textContent=data.medium_count;
+  document.getElementById('r-l').textContent=data.low_count;
+
+  const ps=data.primary_state||{};
+  document.getElementById('r-ps').innerHTML=kv({
+    'Altitude':ps.altitude_km+'km','Speed':ps.speed_ms+'m/s ('+ps.speed_kms+'km/s)',
+    'SMA':ps.sma_km+'km','Eccentricity':ps.eccentricity,
+    'Inclination':ps.inclination_deg+'°','RAAN':ps.raan_deg+'°','ArgP':ps.argp_deg+'°',
+    'True Anomaly':ps.true_anomaly_deg+'°','Period':ps.period_min+' min',
+    'Apogee':ps.apogee_km+'km','Perigee':ps.perigee_km+'km',
+    'ECI position (m)':`[${ps.x_m}, ${ps.y_m}, ${ps.z_m}]`,
+    'ECI velocity (m/s)':`[${ps.vx_ms}, ${ps.vy_ms}, ${ps.vz_ms}]`,
+  });
+
+  const cfg=data.config||{};
+  document.getElementById('r-cfg').innerHTML=kv({
+    'Satellite name':cfg.satellite_name,'Duration':cfg.duration_hours+'h',
+    'Max ΔV':cfg.max_dv_ms+'m/s','Debris loaded':cfg.n_debris_loaded,
+    'Screening dist':(data.config?.screening_distance_km||10)+'km',
+  });
+
+  const conjs=data.conjunctions||[];
+  document.getElementById('r-cc').textContent=`${conjs.length} event(s)`;
+  document.getElementById('r-tb').innerHTML=conjs.length?conjs.map((c,i)=>
+    `<tr class="tc" onclick="showCD(${i})">
+      <td style="font-family:var(--mono);color:var(--blue)">${c.debris_name}</td>
+      <td style="color:var(--muted)">${c.norad_id||'—'}</td>
+      <td style="font-size:10px;color:var(--muted)">${c.source||'—'}</td>
+      <td>${c.tca_hours}h</td>
+      <td style="font-weight:600;color:${c.miss_distance_km<0.5?'#f87171':c.miss_distance_km<2?'#fb923c':'var(--text)'}">${c.miss_distance_km}</td>
+      <td style="font-family:var(--mono)">${c.miss_distance_m}m</td>
+      <td>${c.relative_velocity_kms}km/s</td>
+      <td style="font-family:var(--mono)">${c.pc_scientific}</td>
+      <td><span class="badge b-${c.risk_level}">${c.risk_level}</span></td>
+      <td style="color:${c.action_required?'#f87171':'#4ade80'};font-size:10px">${c.action_required?'⚠ MANEUVER':'✓ Monitor'}</td>
+    </tr>`
+  ).join(''):'<tr><td colspan="10" style="text-align:center;color:var(--muted);padding:14px">No conjunctions within screening distance — satellite is safe</td></tr>';
+
+  // Maneuver section
+  if(data.maneuver_needed){
+    document.getElementById('r-man').style.display='block';
+    const worst=conjs[0];
+    const _rlInfo=data.rl_model_info||{};
+    const _ppoTag=_rlInfo.ppo_trained
+      ? `<span style="font-size:9px;background:#7c3aed25;color:#a78bfa;padding:2px 6px;border-radius:4px;font-weight:700;margin-left:8px">🤖 PyTorch PPO · success ${(((_rlInfo.ppo_success_rate||0)*100)).toFixed(0)}% · collision ${(((_rlInfo.ppo_collision_rate||0)*100)).toFixed(0)}%</span>`
+      : '';
+    document.getElementById('r-mal').innerHTML=
+      `<div class="alert ar">⚠️ <strong>${worst?.debris_name}</strong> — ${worst?.risk_level} risk · Pc = ${worst?.pc_scientific} · Miss = ${worst?.miss_distance_km}km · TCA = ${worst?.tca_hours}h${_ppoTag}</div>`;
+    document.getElementById('r-plans').innerHTML=(data.maneuver_plans||[]).map((p,i)=>{
+      const pct=((p.ppo_probability||0)*100).toFixed(1);
+      const ppoRec=p.ppo_is_recommended||p.ppo_is_recommended_by_policy;
+      return `<div class="pc${i===0?' rec':''}${i===0?' sel':''}" onclick="selPlan(${i},this)">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:5px">
+          <div style="display:flex;align-items:center;gap:5px">
+            <strong style="text-transform:capitalize;font-size:12px">${p.direction}</strong>
+            ${ppoRec?'<span style="font-size:9px;background:#7c3aed30;color:#a78bfa;padding:2px 5px;border-radius:3px;font-weight:700">PPO★</span>':''}
+          </div>
+          <div style="display:flex;align-items:center;gap:4px">
+            ${i===0?'<span style="font-size:9px;background:#22c55e20;color:#4ade80;padding:2px 5px;border-radius:3px;font-weight:700">BEST</span>':''}
+            <span class="badge b-${p.post_maneuver_risk}">${p.post_maneuver_risk}</span>
+          </div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr 1fr;gap:4px;font-size:10px">
+          <div><span style="color:var(--muted)">ΔV</span><br><strong>${p.delta_v_ms}m/s</strong></div>
+          <div><span style="color:var(--muted)">Post miss</span><br><strong>${p.post_maneuver_miss_km}km</strong></div>
+          <div><span style="color:var(--muted)">Fuel</span><br><strong>${p.fuel_kg}kg</strong></div>
+          <div><span style="color:var(--muted)">Reward</span><br><strong style="color:var(--purple)">${p.rl_reward?.total_reward?.toFixed(3)||'—'}</strong></div>
+          <div><span style="color:var(--muted)">π(a|s)</span><br><strong style="color:#a78bfa">${pct}%</strong></div>
+        </div>
+       </div>`;
+    }).join('');
+    if(data.recommended_plan) renderRecPlan(data.recommended_plan);
+  }else{
+    document.getElementById('r-man').style.display='none';
+  }
+
+  document.getElementById('r-mk').innerHTML=kv({
+    'Sim ID':data.sim_id,'Created':data.created_at,
+    'Debris screened':data.total_debris_screened,
+    'Compute time':data.simulation_time_s+'s',
+    'Min miss dist':data.min_miss_km?.toFixed(5)+'km',
+    'Max Pc':data.max_pc?.toExponential(4),
+    'Maneuver needed':data.maneuver_needed?'YES':'NO',
+    'Post-burn re-screen status':data.post_maneuver_rescreen_status||'N/A',
+    'Post-burn events (recommended)':data.post_maneuver_screening?.total_events ?? 'N/A',
+    'New events after burn':data.post_maneuver_screening?.new_events_vs_pre_maneuver ?? 'N/A',
+    'TLE source':data.primary_tle_source,
+  });
+}
+
+function showCD(i){
+  const c=currentReport?.conjunctions?.[i]; if(!c)return;
+  document.getElementById('r-cd').style.display='block';
+  document.getElementById('r-cdn').textContent=c.debris_name;
+  document.getElementById('r-ckv').innerHTML=kv({
+    'TCA':`${c.tca_hours}h (${c.tca_seconds}s after epoch)`,
+    'Miss Distance':`${c.miss_distance_km}km = ${c.miss_distance_m}m`,
+    'Relative Velocity':`${c.relative_velocity_kms}km/s (${c.relative_velocity_ms}m/s)`,
+    'Prob. of Collision':c.pc_scientific,'Risk Level':c.risk_level,
+    'Collision Detected':c.collision_detected?'YES ⚠️ IMPACT':'No',
+    'Maneuver Needed':c.action_required?'YES — Immediate':'No',
+    'Object Type':c.object_type,'Data Source':c.source,
+  });
+  const pt=c.primary_state_tca||{};
+  document.getElementById('r-pkv').innerHTML=kv({
+    'Altitude':pt.altitude_km+'km','Speed':pt.speed_ms+'m/s',
+    'Inclination':pt.inclination_deg+'°','Eccentricity':pt.eccentricity,
+  });
+  const ds=c.debris_state_tca||{};
+  document.getElementById('r-dkv').innerHTML=kv({
+    'Altitude':ds.altitude_km+'km','Speed':ds.speed_ms+'m/s',
+    'Inclination':ds.inclination_deg+'°','Eccentricity':ds.eccentricity,
+  });
+  const de=c.debris_initial_elements||{};
+  document.getElementById('r-del').innerHTML=kv({
+    'Altitude':de.altitude_km+'km','SMA':de.sma_km+'km',
+    'Eccentricity':de.eccentricity,'Inclination':de.inclination_deg+'°',
+    'RAAN':de.raan_deg+'°','Apogee':de.apogee_km+'km','Perigee':de.perigee_km+'km',
+    'Period':de.period_min+' min',
+  });
+  if(distChart) distChart.destroy();
+  distChart=mkChart('dist-chart',c.time_timeline,c.distance_timeline,
+    'Distance (km)',['#3b82f6','#ef4444'],2);
+}
+
+function renderRecPlan(p){
+  const rl = p.rl_reward || {};
+  const loss = p.rl_loss || {};
+  const pol = p.rl_policy || {};
+
+  const ppoProb = p.ppo_probability != null ? ((p.ppo_probability) * 100).toFixed(1) + '%' : '—';
+  const vEst = p.ppo_value_estimate != null ? Number(p.ppo_value_estimate).toFixed(4) : '—';
+  const model = p.rl_model || 'PPO';
+
+  document.getElementById('r-rec').innerHTML =
+    `<dl class="kvg">${kv({
+      'Strategy': p.direction,
+      'ΔV magnitude': p.delta_v_ms + 'm/s',
+      'ΔV vector (ECI)': `[${p.delta_v_vector_eci?.map(v => +v.toFixed(4)).join(', ')}]m/s`,
+      'Burn at': 'T+' + p.burn_time_hours + 'h (' + p.burn_time_s + 's)',
+      'Post miss': p.post_maneuver_miss_km + 'km (' + p.post_maneuver_miss_m + 'm)',
+      'Post Pc': p.post_maneuver_pc?.toExponential(4),
+      'Post risk': p.post_maneuver_risk,
+      'Fuel cost': p.fuel_kg + 'kg',
+      'Isp': p.isp_s + 's',
+      'Efficiency': p.efficiency_score + ' km/(m/s)',
+    })}</dl>
+
+    <div class="rl-box" style="margin-top:9px">
+      <div class="rl-title" style="display:flex;justify-content:space-between">
+        <span>PPO Model Output</span>
+        <span style="font-size:9px;font-weight:400;color:var(--muted)">${model}</span>
+      </div>
+
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;margin:6px 0;padding:6px;background:#020b1a;border-radius:5px">
+        <div style="text-align:center">
+          <div style="font-size:9px;color:var(--muted)">π(a|s) policy prob</div>
+          <div style="font-size:15px;font-weight:700;color:#a78bfa">${ppoProb}</div>
+        </div>
+
+        <div style="text-align:center">
+          <div style="font-size:9px;color:var(--muted)">V(s) value est.</div>
+          <div style="font-size:15px;font-weight:700;color:#60a5fa">${vEst}</div>
+        </div>
+
+        <div style="text-align:center">
+          <div style="font-size:9px;color:var(--muted)">Advantage A(s,a)</div>
+          <div style="font-size:15px;font-weight:700;color:${(rl.advantage || 0) >= 0 ? '#4ade80' : '#f87171'}">
+            ${Number(rl.advantage || 0).toFixed(4)}
+          </div>
+        </div>
+      </div>
+
+      <dl class="kvg">${kv({
+        'Total reward': rl.total_reward,
+        'Separation bonus': rl.separation_bonus,
+        'Fuel penalty': rl.fuel_penalty,
+        'Collision penalty': rl.collision_penalty,
+        'Baseline reward': rl.baseline_reward,
+        'L_clip': loss.L_clip?.toFixed?.(6) ?? loss.L_clip,
+        'L_vf': loss.L_vf?.toFixed?.(6) ?? loss.L_vf,
+        'Entropy H': loss.entropy?.toFixed?.(6) ?? loss.entropy,
+        'L_PPO': (loss.L_ppo || loss.L_ppo_total)?.toFixed?.(6) ?? (loss.L_ppo || loss.L_ppo_total),
+        'Log π(a|s)': pol.log_prob?.toFixed?.(6) ?? pol.log_prob,
+        'Ratio r_t': pol.ratio?.toFixed?.(6) ?? pol.ratio,
+        'Clipped r_t': pol.clipped_ratio?.toFixed?.(6) ?? pol.clipped_ratio,
+      })}</dl>
+    </div>`;
+
+  // New orbit after burn
+  const anim = currentReport?.animation || {};
+  const el = anim.orbit_after_elements;
+
+  if (el) {
+    document.getElementById('r-new-orbit').innerHTML = kv({
+      'Altitude': el.altitude_km + 'km',
+      'SMA': el.sma_km + 'km',
+      'Eccentricity': el.eccentricity,
+      'Inclination': el.inclination_deg + '°',
+      'RAAN': el.raan_deg + '°',
+      'Period': el.period_min + ' min',
+      'Apogee': el.apogee_km + 'km',
+      'Perigee': el.perigee_km + 'km',
+    });
+  }
+}
+
+function selPlan(i, el){
+  document.querySelectorAll('.pc').forEach(c => c.classList.remove('sel'));
+  el.classList.add('sel');
+  if (currentReport?.maneuver_plans?.[i]) {
+    renderRecPlan(currentReport.maneuver_plans[i]);
+  }
+}
+
+function dlReport(){
+  if (!currentReport) return;
+  const b = new Blob([JSON.stringify(currentReport, null, 2)], { type: 'application/json' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(b);
+  a.download = `orbitguard-${currentReport.sim_id}.json`;
+  a.click();
+}
+
+async function loadReport(id){
+  try {
+    const r = await fetch(API + '/api/reports/' + id);
+    if (!r.ok) return;
+    processReport(await r.json());
+    gp('report');
+  } catch {}
+}
+
+// ═══════════════════════════════════════════════════════
+// ENGLISH NARRATIVE REPORT
+// ═══════════════════════════════════════════════════════
+function renderNarrativeReport(data){
+  const n=data.narrative; if(!n) return;
+  document.getElementById('n-empty').style.display='none';
+  document.getElementById('n-content').style.display='block';
+  document.getElementById('n-title').textContent=`${data.primary_name} — Mission Report #${data.sim_id}`;
+  document.getElementById('n-sub').textContent=new Date(data.created_at).toLocaleString();
+  document.getElementById('n-sat').textContent=n.satellite_summary||'—';
+  document.getElementById('n-screen').textContent=n.screening_summary||'—';
+  const oa=n.overall_assessment||'—';
+  const ocls = data.critical_count>0?'narr narr-critical':data.high_count>0?'narr narr-high':'narr';
+  document.getElementById('n-overall').className=ocls;
+  document.getElementById('n-overall').textContent=oa;
+
+  // Per-conjunction narratives
+  const nc=n.conjunction_narratives||[];
+  document.getElementById('n-conjs').innerHTML=nc.map(c=>{
+    const cls=c.risk==='CRITICAL'?'narr narr-critical':c.risk==='HIGH'?'narr narr-high':'narr';
+    return `<div class="${cls}" style="margin-bottom:8px">
+      <div class="narr-title">${c.debris_name} — ${c.risk} RISK — TCA in ${c.tca_h}h — Miss ${c.miss_km}km</div>
+      ${c.narrative}
+    </div>`;
+  }).join('')||'<div class="narr">No significant conjunction events detected within the screening window.</div>';
+
+  // Maneuver narrative
+  const mn=n.maneuver_narrative;
+  if(mn && data.maneuver_needed){
+    document.getElementById('n-man-section').style.display='block';
+    document.getElementById('n-man-content').innerHTML=
+      `<div class="narr narr-critical" style="margin-bottom:8px"><div class="narr-title">Pre-Maneuver Situation</div>${mn.pre_maneuver}</div>
+       <div class="narr" style="margin-bottom:8px"><div class="narr-title">Recommended Burn</div>${mn.summary}</div>
+       <div class="narr ag" style="margin-bottom:8px"><div class="narr-title">Post-Maneuver Outcome</div>${mn.post_maneuver}</div>
+       <div class="rl-box" style="margin-bottom:8px"><div class="rl-title">🤖 PPO RL Model Explanation</div><div style="font-size:11px;color:#c4b5fd;line-height:1.6">${mn.rl_explanation}</div></div>
+       <div class="narr"><div class="narr-title">Orbital Change</div>${mn.orbit_change}</div>`;
+  }else{
+    document.getElementById('n-man-section').style.display='none';
+  }
+  document.getElementById('n-conclusion').textContent=n.conclusion||'—';
+}
+
+// ═══════════════════════════════════════════════════════
+// RL MODEL INFO PAGE
+// ═══════════════════════════════════════════════════════
+async function loadRLInfo(){
+  try{
+    let r=null, ppoM=null;
+
+    try{
+      const pr=await fetch(API+'/api/ppo/metrics');
+      if(pr.ok) ppoM=await pr.json();
+    }catch{}
+
+    if(!ppoM){
+      r=await fetch(API+'/api/rl_model');
+      if(!r||!r.ok) return;
+    }
+
+    const m = ppoM ? (() => {
+      const pp = ppoM.ppo || {};
+      return {
+        algorithm: pp.algorithm || 'PPO',
+        framework: pp.framework || 'PyTorch',
+        state_space_dim: ppoM.ppo?.state_dim || 9,
+        action_space: ppoM.ppo?.actions?.join(', ') || '6 RTN directions',
+        policy_network: pp.policy_arch || 'MLP 9→256→256→128→6',
+        value_network: pp.value_arch || 'MLP 9→256→256→128→1',
+        training_episodes: ppoM.training?.n_episodes,
+        convergence: ppoM.loss?.converged ? 'Yes' : 'Training',
+        loss_components: {
+          L_CLIP:'clipped surrogate', L_VF:'MSE value loss', H:'entropy bonus',
+          c1:pp.c1_value_coeff, c2:pp.c2_entropy_coeff, epsilon_clip:pp.clip_epsilon
+        },
+        reward_function:'2·log10(miss_km+1) − 0.15·(ΔV/max_ΔV) − 5·𝟙[miss<1km]',
+        reward_components:{
+          separation_bonus:'2·log10(miss_km+1)',
+          fuel_penalty:'-0.15·(ΔV/max_ΔV)',
+          collision_penalty:'-5 if miss<1km'
+        },
+        state_features:[
+          'miss_dist_norm','rel_vel_norm','tca_fraction','dv_budget_norm',
+          'r_norm','v_norm','debris_dir_x','debris_dir_y','debris_dir_z'
+        ],
+        hyperparameters:{
+          learning_rate:pp.lr_actor,
+          gamma:pp.gamma,
+          gae_lambda:pp.gae_lambda,
+          n_steps:pp.rollout_steps,
+          batch_size:pp.batch_size,
+          n_epochs:pp.n_epochs_per_update
+        },
+      };
+    })() : await r.json();
+
+    document.getElementById('rl-details').innerHTML = kv({
+      'Algorithm':m.algorithm,
+      'Framework':m.framework,
+      'State space':m.state_space_dim+' dimensions',
+      'Action space':m.action_space,
+      'Policy network':m.policy_network,
+      'Value network':m.value_network,
+      'Training episodes':m.training_episodes?.toLocaleString(),
+      'Convergence':m.convergence,
+    });
+
+    const lc=m.loss_components||{};
+    const tm=ppoM?.task_metrics||{};
+    const ev=ppoM?.evaluation||{};
+    const md2=ppoM?.miss_distance||{};
+    let lossHtml='';
+
+    if(ppoM && tm.success_rate!=null){
+      const noteCol='#64748b';
+
+      lossHtml=`
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:5px;margin-bottom:8px">
+        ${[
+          ['Task Success Rate',(tm.success_rate*100).toFixed(1)+'%','#4ade80',
+            tm.success_definition||'final_miss_km >= 5.0'],
+          ['Mean Miss Distance',(ppoM.miss_distance?.mean_km||0).toFixed(2)+' km','#60a5fa',
+            'Avg post-maneuver clearance'],
+          ['Std Dev Miss',(ppoM.miss_distance?.std_km||0).toFixed(2)+' km','#a78bfa',
+            'Variability in outcomes'],
+          ['Median Miss',(ppoM.miss_distance?.median_km||0).toFixed(1)+' km','#f59e0b',
+            '50th percentile outcome'],
+          ['Max Miss',(ppoM.miss_distance?.max_km||0).toFixed(2)+' km','#34d399',
+            'Best single episode result'],
+          ['Collision Rate',(tm.collision_rate*100).toFixed(1)+'%','#f87171',
+            tm.collision_definition||'final_miss_km < 1.0'],
+        ].map(([l,v,col,note])=>`
+          <div style="background:#0a0f1a;border-radius:5px;padding:6px;text-align:center;border:1px solid #1e3a5f30">
+            <div style="font-size:9px;color:var(--muted)">${l}</div>
+            <div style="font-size:14px;font-weight:700;color:${col}">${v}</div>
+            <div style="font-size:8px;color:#334460;margin-top:2px">${note}</div>
+          </div>
+        `).join('')}
+      </div>
+
+      <div style="font-size:10px;color:var(--muted);margin-bottom:5px;font-weight:700">Training Loss (Final)</div>
+      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:4px;margin-bottom:8px">
+        ${[
+          ['Policy Loss',(ppoM.loss?.policy_loss_final||0).toFixed(6),'#60a5fa','L_CLIP — neg=good, agent learning'],
+          ['Value Loss',(ppoM.loss?.value_loss_final||0).toFixed(6),'#a78bfa','L_VF — MSE of value fn'],
+          ['Entropy',(ppoM.loss?.entropy_final||0).toFixed(6),'#34d399','H(π) — exploration diversity'],
+          ['Approx KL',(ppoM.loss?.approx_kl_mean||0).toFixed(6),'#f59e0b','KL div from old policy'],
+        ].map(([l,v,col,note])=>`
+          <div style="background:#0a0f1a;border-radius:5px;padding:5px;text-align:center;border:1px solid #1e3a5f20">
+            <div style="font-size:9px;color:var(--muted)">${l}</div>
+            <div style="font-size:12px;font-weight:700;color:${col};font-family:monospace">${v}</div>
+            <div style="font-size:8px;color:#334460;margin-top:2px">${note}</div>
+          </div>
+        `).join('')}
+      </div>
+
+      <div style="font-size:10px;color:var(--muted);margin-bottom:4px;font-weight:700">Miss Distance Percentiles</div>
+      <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:3px;margin-bottom:6px">
+        ${Object.entries(ppoM.miss_distance?.percentiles||{}).map(([k,v])=>`
+          <div style="background:#0a0f1a;border-radius:4px;padding:4px;text-align:center">
+            <div style="font-size:8px;color:#475569">${k.toUpperCase()}</div>
+            <div style="font-size:11px;color:#60a5fa;font-weight:700">${v}km</div>
+          </div>`).join('')}
+      </div>
+
+      ${kv({
+        'Eval episodes':ev.n_eval_episodes||60,
+        'Eval mean reward':ev.mean_reward?.toFixed(4),
+        'Eval reward std':ev.std_reward?.toFixed(4),
+        'Eval mean miss':ev.mean_miss_km?.toFixed(3)+' km',
+        'Eval median miss':ev.median_miss_km?.toFixed(1)+' km',
+        'Clip fraction':(ppoM.loss?.clip_fraction||0).toFixed(4)+' (fraction of clipped updates)',
+        'Total training steps':ppoM.training?.total_steps,
+        'Training time':ppoM.training?.training_time_s+'s',
+        'Device':ppoM.ppo?.device||'—',
+      })}
+
+      <div style="font-size:10px;color:var(--muted);margin-top:8px;margin-bottom:4px;font-weight:700">Model vs Baselines</div>
+      <table style="font-size:10px;border-collapse:collapse;width:100%">
+        <tr style="color:var(--muted)"><th style="text-align:left;padding:2px 5px">Strategy</th><th>Mean Reward</th><th>Mean Miss</th><th>Success</th></tr>
+        ${Object.entries(ppoM.model_comparison||{}).map(([k,v])=>{
+          const isBest=k==='ppo_trained';
+          const nameMap={'random':'Random Policy','greedy_prograde':'Greedy Prograde','debris_directed':'Debris-Directed','ppo_trained':'PPO (Trained)'};
+          const name=nameMap[k]||k;
+          return `<tr style="${isBest?'background:#22c55e08;':''}">
+            <td style="padding:4px 6px;color:${isBest?'#4ade80':'#e2e8f0'};font-weight:${isBest?700:400}">${isBest?'⭐ ':''}${name}</td>
+            <td style="padding:4px 6px;text-align:center;font-family:monospace">${v.mean_reward?.toFixed(4)}</td>
+            <td style="padding:4px 6px;text-align:center;font-family:monospace">${v.mean_miss_km?.toFixed(2)}km</td>
+            <td style="padding:4px 6px;text-align:center;color:#4ade80">${(v.success_rate*100).toFixed(0)}%</td>
+          </tr>`;
+        }).join('')}
+      </table>`;
+    } else {
+      lossHtml=kv({
+        'Loss function':m.loss_function,
+        'L_CLIP':lc.L_CLIP,
+        'L_VF':lc.L_VF,
+        'H':lc.H,
+        'c1':lc.c1,
+        'c2':lc.c2,
+        'ε':lc.epsilon_clip
+      });
+    }
+
+    document.getElementById('rl-loss').innerHTML = lossHtml;
+
+// Reward function — real values from trained model
+const rewardText = [
+  `r = 2·log10(miss_km + 1) − 0.15·(|ΔV|/max_ΔV) − 5·𝟙[miss < 1km]`,
+  ``,
+  `  Separation bonus  :  2·log10(post_miss_km + 1)       [rewards larger miss]`,
+  `  Fuel penalty      : −0.15 × (|ΔV| / max_ΔV)          [discourages waste]`,
+  `  Collision penalty : −5.0  if miss < 1km               [hard safety line]`,
+  ``,
+  `Mean training reward  :  ${ppoM?.reward?.mean?.toFixed(4) || m.reward_function || '—'}`,
+  `Final 50-ep mean      :  ${ppoM?.reward?.final_50_mean?.toFixed(4) || '—'}`,
+  `Reward improvement    : +${ppoM?.reward?.improvement?.toFixed(4) || '—'}`,
+  `Eval mean reward      :  ${ppoM?.evaluation?.mean_reward?.toFixed(4) || '—'}`,
+].join('\n');
+
+const rlRewEl = document.getElementById('rl-reward');
+if (rlRewEl) rlRewEl.textContent = rewardText;
+
+// State space features
+const stateEl = document.getElementById('rl-state');
+if (stateEl) {
+  const features = m.state_features || [
+    'miss_dist_norm','rel_vel_norm','tca_fraction',
+    'dv_budget_norm','r_norm','v_norm',
+    'debris_dir_x','debris_dir_y','debris_dir_z'
+  ];
+
+  stateEl.innerHTML = features.map((f, i) =>
+    `<div style="display:flex;align-items:center;gap:5px;background:#0a0f1a;border:1px solid #1e3a5f30;border-radius:4px;padding:3px 7px;font-size:10px">
+      <span style="color:#475569;font-size:9px">[${i}]</span>
+      <span style="font-family:monospace;color:#a5b4fc">${f}</span>
+     </div>`
+  ).join('');
+}
+
+    // Training hyperparameters
+    const trainEl = document.getElementById('rl-train');
+    if(trainEl){
+      const pp = ppoM?.ppo || {};
+      trainEl.innerHTML = kv({
+        'Learning rate (actor)':  pp.lr_actor    || m.hyperparameters?.learning_rate || '3e-4',
+        'Learning rate (critic)': pp.lr_critic   || '1e-3',
+        'Gamma (discount)':       pp.gamma       || m.hyperparameters?.gamma || '0.99',
+        'GAE lambda':             pp.gae_lambda  || m.hyperparameters?.gae_lambda || '0.95',
+        'Clip epsilon (ε)':       pp.clip_epsilon|| '0.2',
+        'N epochs / update':      pp.n_epochs_per_update || m.hyperparameters?.n_epochs || '10',
+        'Batch size':             pp.batch_size  || m.hyperparameters?.batch_size || '256',
+        'Rollout steps':          pp.rollout_steps || m.hyperparameters?.n_steps || '2048',
+        'Gradient clip':          pp.grad_clip   || '0.5',
+        'Optimizer':              pp.optimizer   || 'Adam (eps=1e-5)',
+        'Total parameters':       pp.n_parameters_total?.toLocaleString() || '203,399',
+        'Actor parameters':       pp.n_parameters_actor?.toLocaleString() || '102,022',
+        'Critic parameters':      pp.n_parameters_critic?.toLocaleString() || '101,377',
+      });
+    }
+
+  }catch(e){ console.error('RL info error:',e); }
+}
+
+// ═══════════════════════════════════════════════════════
+// LIVE VIEWER — Three.js with DEBRIS ORBIT RINGS
+// ═══════════════════════════════════════════════════════
+function initViewer(){
+  if(renderer) return;
+  const canvas=document.getElementById('three-canvas');
+  const W=canvas.parentElement.clientWidth;
+  const H=Math.min(500, Math.max(360, window.innerHeight*0.50));
+  canvas.width=W; canvas.height=H;
+  canvas.style.height=H+'px';
+  canvas.style.minHeight=H+'px';
+
+  renderer=new THREE.WebGLRenderer({canvas,antialias:true});
+  renderer.setSize(W,H); renderer.setClearColor(0x020b14,1);
+
+  scene=new THREE.Scene();
+  camera=new THREE.PerspectiveCamera(45,W/H,1e3,1e9);
+  camera.position.set(0,1.2e7,2.4e7); camera.lookAt(0,0,0);
+
+  // Stars
+  const sg=new THREE.BufferGeometry();
+  const sp=new Float32Array(4000*3);
+  for(let i=0;i<sp.length;i++) sp[i]=(Math.random()-.5)*4e8;
+  sg.setAttribute('position',new THREE.BufferAttribute(sp,3));
+  scene.add(new THREE.Points(sg,new THREE.PointsMaterial({color:0xffffff,size:5e4,transparent:true,opacity:.7})));
+
+  // Earth layers
+  scene.add(new THREE.Mesh(new THREE.SphereGeometry(6378137,64,64),
+    new THREE.MeshPhongMaterial({color:0x0a2a4a,emissive:0x001020,shininess:20})));
+  scene.add(new THREE.Mesh(new THREE.SphereGeometry(6378137*1.001,24,24),
+    new THREE.MeshBasicMaterial({color:0x1e3a5f,wireframe:true,transparent:true,opacity:.08})));
+  scene.add(new THREE.Mesh(new THREE.SphereGeometry(6378137*1.025,32,32),
+    new THREE.MeshPhongMaterial({color:0x1565c0,transparent:true,opacity:.06,side:THREE.BackSide})));
+
+  scene.add(new THREE.AmbientLight(0x334466,.6));
+  const sun=new THREE.DirectionalLight(0xffd580,1.2);
+  sun.position.set(5e7,2e7,3e7); scene.add(sun);
+
+  // Primary satellite
+  primaryMesh=new THREE.Mesh(
+    new THREE.OctahedronGeometry(5e4),
+    new THREE.MeshPhongMaterial({color:0x22c55e,emissive:0x22c55e,emissiveIntensity:.7})
+  );
+  scene.add(primaryMesh);
+
+  // Mouse controls
+  let drag=false,px=0,py=0,th=.5,ph=1.,rad=2.8e7;
+  const upCam=()=>{camera.position.set(rad*Math.sin(ph)*Math.cos(th),rad*Math.cos(ph),rad*Math.sin(ph)*Math.sin(th));camera.lookAt(0,0,0);};
+  canvas.addEventListener('mousedown',e=>{drag=true;px=e.clientX;py=e.clientY;});
+  canvas.addEventListener('mouseup',()=>drag=false);
+  canvas.addEventListener('mousemove',e=>{if(!drag)return;th-=(e.clientX-px)*.004;ph=Math.max(.1,Math.min(Math.PI-.1,ph-(e.clientY-py)*.004));px=e.clientX;py=e.clientY;upCam();});
+  canvas.addEventListener('wheel',e=>{rad=Math.max(8e6,Math.min(8e7,rad+e.deltaY*8000));upCam();});
+  upCam();
+
+  let raf;
+  const render=()=>{raf=requestAnimationFrame(render);renderer.render(scene,camera);};
+  render();
+
+  new ResizeObserver(()=>{const nw=canvas.parentElement.clientWidth;renderer.setSize(nw,H);camera.aspect=nw/H;camera.updateProjectionMatrix();}).observe(canvas.parentElement);
+
+  if(currentReport) loadAnimationData(currentReport);
+}
+
+// Color by risk
+const RISK_COLOR={CRITICAL:0xef4444,HIGH:0xf97316,MEDIUM:0xeab308,LOW:0x4ade80,NONE:0x475569};
+const RISK_COL_HEX={CRITICAL:'#ef4444',HIGH:'#f97316',MEDIUM:'#eab308',LOW:'#4ade80',NONE:'#475569'};
+
+function _addLine(pts, color, opacity, tag){
+  if(!pts?.length||!scene) return;
+  const verts=new Float32Array(pts.length*3);
+  pts.forEach((p,i)=>{verts[i*3]=p.x;verts[i*3+1]=p.z;verts[i*3+2]=p.y;});
+  const geo=new THREE.BufferGeometry(); geo.setAttribute('position',new THREE.BufferAttribute(verts,3));
+  const line=new THREE.Line(geo,new THREE.LineBasicMaterial({color,transparent:true,opacity}));
+  line.userData.orbitTag=tag; scene.add(line);
+}
+
+function clearOrbitLines(){
+  if(!scene) return;
+  const toRemove=scene.children.filter(c=>c.userData.orbitTag);
+  toRemove.forEach(c=>scene.remove(c));
+  Object.values(debrisMeshes).forEach(m=>scene.remove(m));
+  debrisMeshes={};
+}
+
+function loadAnimationData(report){
+  animFrames=report?.animation?.frames||[];
+  const anim=report?.animation||{};
+  const compare=report?.animation_compare||null;
+
+  document.getElementById('v-empty').style.display=animFrames.length?'none':'block';
+  document.getElementById('v-info').style.display=animFrames.length?'block':'none';
+  if(!animFrames.length) return;
+
+  document.getElementById('scrub').max=animFrames.length-1;
+  document.getElementById('scrub').value=0;
+
+  if(!scene) return; // viewer not initialised yet
+
+  clearOrbitLines();
+
+  // ── Primary orbit rings ───────────────────────────────────────────────────
+  _addLine(report.primary_orbit_ring,0x22c55e,.55,'primary_before');
+  if(anim.orbit_after){
+    _addLine(anim.orbit_after,0x3b82f6,.75,'primary_after');
+    document.getElementById('v-man-info').style.display='block';
+    document.getElementById('v-safe-note').style.display='none';
+  }else{
+    document.getElementById('v-man-info').style.display='none';
+    document.getElementById('v-safe-note').style.display='flex';
+  }
+
+  // Burn marker
+  if(anim.burn_point){
+    const bp=anim.burn_point;
+    const bgeo=new THREE.SphereGeometry(1.5e5,8,8);
+    const bmat=new THREE.MeshPhongMaterial({color:0xf97316,emissive:0xf97316,emissiveIntensity:1.2});
+    const bm=new THREE.Mesh(bgeo,bmat); bm.position.set(bp.x,bp.z,bp.y);
+    bm.userData.orbitTag='burn_point'; scene.add(bm);
+  }
+
+  // ── ALL debris orbit rings — high opacity, named sidebar ────────────────
+  const allRings=report.all_debris_rings||{};
+  const conjs=report.conjunctions||[];
+  const riskCount={CRITICAL:0,HIGH:0,MEDIUM:0,LOW:0,NONE:0};
+  const debrisSidebarItems=[];
+
+  Object.entries(allRings).forEach(([id,info])=>{
+    if(!info.ring?.length) return;
+    const risk=info.risk_level||'NONE';
+    // High opacity: always clearly visible
+    const opacity=risk==='CRITICAL'?.90:risk==='HIGH'?.80:risk==='MEDIUM'?.65:risk==='LOW'?.55:.45;
+    const color=RISK_COLOR[risk]||0x4a6080;
+    _addLine(info.ring,color,opacity,'debris_ring_'+id);
+    riskCount[risk]=(riskCount[risk]||0)+1;
+    const conj=conjs.find(c=>c.debris_id===id);
+    debrisSidebarItems.push({id,name:info.name,type:info.type,risk,color:RISK_COL_HEX[risk]||'#64748b',
+      miss:conj?.miss_distance_km,pc:conj?.pc_scientific,tca:conj?.tca_hours});
+  });
+
+  // ── Debris animated dots ──────────────────────────────────────────────────
+  const debIds=Object.keys(animFrames[0]?.debris||{});
+  debIds.forEach(id=>{
+    const c=conjs.find(c=>c.debris_id===id);
+    const risk=c?.risk_level||'NONE';
+    const color=RISK_COLOR[risk]||0x475569;
+    const sz=risk==='CRITICAL'?6e4:risk==='HIGH'?5e4:4e4;
+    const m=new THREE.Mesh(new THREE.OctahedronGeometry(sz),
+      new THREE.MeshPhongMaterial({color,emissive:color,emissiveIntensity:.8}));
+    debrisMeshes[id]=m; scene.add(m);
+  });
+
+  // ── Orbit legend (compact color chips) ───────────────────────────────────
+  const riskLabels={CRITICAL:'Critical (Pc>10⁻³)',HIGH:'High (Pc>10⁻⁴)',MEDIUM:'Medium (Pc>10⁻⁵)',LOW:'Low/Safe',NONE:'No pass'};
+  let legHTML=`<div class="oli"><div class="oll" style="background:#22c55e;height:3px"></div><span style="color:#4ade80;font-weight:600">🛰 Your satellite</span></div>`;
+  if(anim.orbit_after) legHTML+=`<div class="oli"><div class="oll" style="background:#3b82f6;height:3px"></div><span style="color:#60a5fa;font-weight:600">Post-burn orbit</span></div>`;
+  ['CRITICAL','HIGH','MEDIUM','LOW','NONE'].forEach(r=>{
+    if(riskCount[r]>0)
+      legHTML+=`<div class="oli"><div class="oll" style="background:${RISK_COL_HEX[r]||'#64748b'};height:2px"></div><span style="color:${RISK_COL_HEX[r]||'#64748b'}">${riskLabels[r]} ×${riskCount[r]}</span></div>`;
+  });
+  document.getElementById('o-leg').innerHTML=legHTML;
+
+  // ── Named debris sidebar list ─────────────────────────────────────────────
+  const totalRings=debrisSidebarItems.length;
+  const sorted=debrisSidebarItems.sort((a,b)=>{
+    const o={CRITICAL:0,HIGH:1,MEDIUM:2,LOW:3,NONE:4};
+    return (o[a.risk]||4)-(o[b.risk]||4);
+  });
+  const sidebarEl=document.getElementById('debris-orbit-list');
+  if(sidebarEl){
+    document.getElementById('debris-count-badge').textContent=totalRings+' orbits';
+    sidebarEl.innerHTML=sorted.map(d=>
+      `<div style="display:flex;align-items:center;gap:6px;padding:4px 0;border-bottom:1px solid #1e3a5f20">
+        <div style="width:10px;height:10px;border-radius:2px;flex-shrink:0;background:${d.color};opacity:0.9"></div>
+        <div style="flex:1;min-width:0">
+          <div style="font-size:10px;font-weight:600;color:#e2e8f0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${d.name}">${d.name}</div>
+          <div style="font-size:9px;color:var(--muted)">${d.type}${d.miss!=null?' · '+d.miss+'km miss':''}</div>
+        </div>
+        <span class="badge b-${d.risk}" style="font-size:8px;padding:1px 4px">${d.risk}</span>
+       </div>`
+    ).join('');
+  }
+
+  // Burn details
+  const rec=report.recommended_plan;
+  if(rec){
+    document.getElementById('v-bkv').innerHTML=kv({
+      'Direction':rec.direction,'ΔV':rec.delta_v_ms+'m/s',
+      'Burn at':'T+'+rec.burn_time_hours+'h','Fuel':rec.fuel_kg+'kg',
+      'Post miss':rec.post_maneuver_miss_km+'km','Post risk':rec.post_maneuver_risk,
+      'PPO reward':rec.rl_reward?.total_reward,
+    });
+  }
+
+  // Timeline chart
+  buildTLChart(report);
+
+  // Start playback
+  currentFrame=0; playing=true;
+  document.getElementById('play-btn').textContent='⏸ Pause';
+  if(animInt) clearInterval(animInt);
+  startAnim(anim.burn_frame);
+
+  const compareVisible=!!(
+    compare?.nominal?.frames?.length &&
+    compare?.maneuvered?.frames?.length &&
+    (report?.has_collision || report?.maneuver_needed || report?.recommended_plan)
+  );
+  document.getElementById('compare-wrap').style.display=compareVisible?'grid':'none';
+  if(compareVisible) startCompareAnimation(compare, report);
+  else{
+    stopCompareAnimation();
+    const lm=document.getElementById('compare-left-meta'); if(lm) lm.innerHTML='';
+    const rm=document.getElementById('compare-right-meta'); if(rm) rm.innerHTML='';
+  }
+}
+
+function startAnim(bf){
+  if(animInt) clearInterval(animInt);
+  animInt=setInterval(()=>{
+    if(!playing||!animFrames.length) return;
+    currentFrame=(currentFrame+1)%animFrames.length;
+    document.getElementById('scrub').value=currentFrame;
+    renderFrame(currentFrame,bf);
+  },50/Math.max(0.1,playSpeed));
+}
+
+function renderFrame(fi,bf){
+  if(!animFrames.length||fi>=animFrames.length) return;
+  const f=animFrames[fi];
+  document.getElementById('stl').textContent='T+'+f.t_h+'h';
+
+  if(primaryMesh&&f.primary){
+    const p=f.primary; primaryMesh.position.set(p.x,p.z,p.y);
+    primaryMesh.material.emissiveIntensity=f.burn_active?1.5:.7;
+    primaryMesh.rotation.y+=.02;
+  }
+
+  Object.entries(f.debris||{}).forEach(([id,dp])=>{
+    const m=debrisMeshes[id]; if(m) m.position.set(dp.x,dp.z,dp.y);
+  });
+
+  const isBurn=f.burn_active||false;
+  document.getElementById('bb').className='bb'+(isBurn?' on':'');
+
+  // Live positions
+  let html=`<div style="display:flex;align-items:center;gap:6px;margin-bottom:4px">
+    <div style="width:8px;height:8px;border-radius:50%;background:#22c55e;flex-shrink:0"></div>
+    <strong style="color:#4ade80">🛰 ${currentReport?.primary_name||'Primary'}</strong>
+  </div>`;
+  if(f.primary) html+=`<div style="font-size:10px;color:var(--muted);margin-bottom:6px;font-family:monospace">Alt:${f.primary.alt}km  Lat:${f.primary.lat}°  Lon:${f.primary.lon}°</div>`;
+
+  const conjs=currentReport?.conjunctions||[];
+  const RISK_LINE2={'CRITICAL':'#ef4444','HIGH':'#f97316','MEDIUM':'#eab308','LOW':'#22c55e','NONE':'#475569'};
+  const riskOrder2={'CRITICAL':0,'HIGH':1,'MEDIUM':2,'LOW':3,'NONE':4};
+
+  // Sort debris by risk for display
+  const debEntries=Object.entries(f.debris||{});
+  const sortedDeb=debEntries.sort((a,b)=>{
+    const ca=conjs.find(c=>c.debris_id===a[0]); const cb=conjs.find(c=>c.debris_id===b[0]);
+    return (riskOrder2[ca?.risk_level]||4)-(riskOrder2[cb?.risk_level]||4);
+  });
+
+  if(sortedDeb.length){
+    html+=`<div style="font-size:9px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px">${sortedDeb.length} Debris Objects</div>`;
+    sortedDeb.forEach(([id,dp])=>{
+      const c=conjs.find(c=>c.debris_id===id);
+      const risk=c?.risk_level||'NONE';
+      const col=RISK_LINE2[risk];
+      const missKm=c?.miss_distance_km||'—';
+      const tca=c?.tca_hours||'—';
+      html+=`<div style="display:flex;align-items:center;gap:5px;margin-bottom:3px;padding:3px 5px;background:${col}10;border-left:2px solid ${col};border-radius:0 4px 4px 0">
+        <div style="flex:1;min-width:0">
+          <div style="font-size:10px;color:${col};font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${c?.debris_name||id}">${(c?.debris_name||id).substring(0,18)}</div>
+          <div style="font-size:9px;color:var(--muted);font-family:monospace">Alt:${dp.alt}km</div>
+        </div>
+        <div style="text-align:right;flex-shrink:0">
+          <div style="font-size:10px;color:${col};font-weight:700">${missKm}km</div>
+          <div style="font-size:9px;color:var(--muted)">TCA:${tca}h</div>
+        </div>
+      </div>`;
+    });
+  }
+  document.getElementById('v-pos').innerHTML=html;
+}
+
+function seekTo(v){ currentFrame=+v; renderFrame(currentFrame); }
+
+function stopCompareAnimation(){
+  if(compareAnimInt) clearInterval(compareAnimInt);
+  compareAnimInt=null;
+}
+
+function _drawCompareCanvas(canvasId, anim, fi, lineColor, pointColor, tag, threatId, isLeft){
+  const cv=document.getElementById(canvasId);
+  if(!cv || !anim?.frames?.length) return;
+  const cssW=cv.clientWidth||300, cssH=cv.clientHeight||170;
+  const dpr=window.devicePixelRatio||1;
+  cv.width=Math.floor(cssW*dpr); cv.height=Math.floor(cssH*dpr);
+  const ctx=cv.getContext('2d');
+  ctx.setTransform(dpr,0,0,dpr,0,0);
+  ctx.clearRect(0,0,cssW,cssH);
+
+  const f=anim.frames[Math.max(0,Math.min(fi,anim.frames.length-1))];
+  const ring=anim.orbit_before||[];
+  const postRing=anim.orbit_after||[];
+  const pad=16, earthR=28, cx=cssW/2, cy=cssH/2;
+  const scale=Math.min(cssW,cssH)*0.25/7000000;
+
+  const drawPath=(pts,col,w=1.4,alpha=1)=>{
+    if(!pts.length) return;
+    ctx.beginPath(); ctx.strokeStyle=col; ctx.lineWidth=w; ctx.globalAlpha=alpha;
+    pts.forEach((p,i)=>{
+      const x=cx+p.x*scale; const y=cy-p.y*scale;
+      if(i===0) ctx.moveTo(x,y); else ctx.lineTo(x,y);
+    });
+    ctx.stroke(); ctx.globalAlpha=1;
+  };
+  drawPath(ring,'#4ade80',1.6,.9);
+  if(postRing.length) drawPath(postRing,lineColor,1.8,.95);
+
+  // Earth
+  ctx.beginPath(); ctx.fillStyle='#0b2a4a'; ctx.arc(cx,cy,earthR,0,Math.PI*2); ctx.fill();
+  ctx.strokeStyle='#1e3a5f'; ctx.lineWidth=1; ctx.stroke();
+
+  const p=f?.primary;
+  const threat=f?.debris?.[threatId];
+  if(p){
+    ctx.beginPath(); ctx.fillStyle=pointColor; ctx.arc(cx+p.x*scale,cy-p.y*scale,4,0,Math.PI*2); ctx.fill();
+  }
+  if(threat){
+    ctx.beginPath(); ctx.fillStyle=isLeft?'#f87171':'#60a5fa';
+    ctx.arc(cx+threat.x*scale,cy-threat.y*scale,4,0,Math.PI*2); ctx.fill();
+    // Threat connector line helps user see relative geometry quickly.
+    ctx.beginPath(); ctx.strokeStyle=isLeft?'#ef4444':'#22c55e'; ctx.globalAlpha=.55; ctx.lineWidth=1.2;
+    ctx.moveTo(cx+(p?.x||0)*scale,cy-(p?.y||0)*scale);
+    ctx.lineTo(cx+threat.x*scale,cy-threat.y*scale);
+    ctx.stroke(); ctx.globalAlpha=1;
+  }
+  if(f?.tca_active){
+    ctx.beginPath();
+    ctx.fillStyle=isLeft?'#ef4444':'#22c55e';
+    ctx.arc(cx+(p?.x||0)*scale,cy-(p?.y||0)*scale,isLeft?8:6,0,Math.PI*2);
+    ctx.fill();
+    ctx.strokeStyle=isLeft?'#ef4444':'#22c55e';
+    ctx.lineWidth=2;
+    ctx.strokeRect(8, 22, cssW-16, cssH-30);
+    ctx.fillStyle=isLeft?'#f87171':'#4ade80';
+    ctx.font='bold 11px monospace';
+    ctx.fillText(isLeft?'COLLISION RISK @ TCA':'AVOIDED AFTER MANEUVER', 12, 18);
+  }
+  if(anim?.burn_frame!=null && fi>=anim.burn_frame){
+    ctx.fillStyle='#f97316'; ctx.font='10px monospace'; ctx.fillText('BURN', pad, cssH-pad);
+  }
+  ctx.fillStyle='#94a3b8'; ctx.font='10px monospace'; ctx.fillText(tag, pad, 14);
+}
+
+function startCompareAnimation(compare, report){
+  stopCompareAnimation();
+  const worst=report?.conjunctions?.[0]||{};
+  const rec=report?.recommended_plan||{};
+  const threatId=worst.debris_id;
+  const leftMeta=document.getElementById('compare-left-meta');
+  const rightMeta=document.getElementById('compare-right-meta');
+  if(leftMeta){
+    leftMeta.innerHTML=
+      `<span class="cmp-badge" style="border-color:#7f1d1d;color:#fca5a5">Risk ${worst.risk_level||'—'}</span>`+
+      `<span class="cmp-badge">Miss ${worst.miss_distance_km??'—'} km</span>`+
+      `<span class="cmp-badge">Pc ${worst.pc_scientific||'—'}</span>`;
+  }
+  if(rightMeta){
+    rightMeta.innerHTML=
+      `<span class="cmp-badge" style="border-color:#14532d;color:#86efac">Post-risk ${rec.post_maneuver_risk||'LOW'}</span>`+
+      `<span class="cmp-badge">Post miss ${rec.post_maneuver_miss_km??'—'} km</span>`+
+      `<span class="cmp-badge">ΔV ${rec.delta_v_ms??'—'} m/s</span>`;
+  }
+  let fi=0;
+  const n=Math.max(compare.nominal.frames.length, compare.maneuvered.frames.length);
+  compareAnimInt=setInterval(()=>{
+    if(!playing){ return; }
+    _drawCompareCanvas('compare-left', compare.nominal, fi, '#f87171', '#22c55e', 'NOMINAL', threatId, true);
+    _drawCompareCanvas('compare-right', compare.maneuvered, fi, '#60a5fa', '#22c55e', 'MANEUVERED', threatId, false);
+    fi=(fi+1)%Math.max(1,n);
+  },70/Math.max(0.1,playSpeed));
+}
+function togglePlay(){playing=!playing;document.getElementById('play-btn').textContent=playing?'⏸ Pause':'▶ Play';}
+function setSpeed(v){playSpeed=+v;if(animInt){clearInterval(animInt);startAnim(currentReport?.animation?.burn_frame);}}
+
+function buildTLChart(report){
+  if(tlChart) tlChart.destroy();
+  const conjs=report.conjunctions||[];
+  const frames=report.animation?.frames||[];
+  const RISK_LINE={'CRITICAL':'#ef4444','HIGH':'#f97316','MEDIUM':'#eab308','LOW':'#22c55e','NONE':'#475569'};
+  const riskOrd={'CRITICAL':0,'HIGH':1,'MEDIUM':2,'LOW':3,'NONE':4};
+
+  // Time axis — always from animation frames for accuracy
+  let times=frames.length?frames.map(f=>+f.t_h):
+    (conjs[0]?.time_timeline||[]);
+  if(!times.length){ document.getElementById('tl-chart').style.display='none'; return; }
+  document.getElementById('tl-chart').style.display='block';
+
+  // Build distance data — ALWAYS compute from animation frames (real ECI positions)
+  // This ensures real values even when distance_timeline is empty
+  const computeFromFrames=(debId)=>{
+    if(!frames.length||!debId) return null;
+    const dists=frames.map(f=>{
+      const p=f.primary, d=f.debris?.[debId];
+      if(!p||!d) return null;
+      return +(Math.sqrt((p.x-d.x)**2+(p.y-d.y)**2+(p.z-d.z)**2)/1000).toFixed(3);
+    });
+    return dists.every(v=>v===null)?null:dists;
+  };
+
+  // All conjunctions — compute real distances
+  const sorted=[...conjs].sort((a,b)=>(riskOrd[a.risk_level]||4)-(riskOrd[b.risk_level]||4));
+  const conjData=sorted.map(c=>{
+    // Try stored timeline first; fall back to live ECI computation
+    let dist=c.distance_timeline?.length?c.distance_timeline:computeFromFrames(c.debris_id);
+    if(!dist||!dist.length) dist=null;
+    return {conj:c, dist};
+  }).filter(({dist})=>dist&&dist.length>0);
+
+  // All debris lines, colored by risk
+  const datasets=conjData.map(({conj:c,dist})=>{
+    const col=RISK_LINE[c.risk_level]||'#475569';
+    const isCrit=c.risk_level==='CRITICAL'||c.risk_level==='HIGH';
+    return {
+      label:c.debris_name.substring(0,14)+' ('+c.miss_distance_km+'km)',
+      data:dist,
+      borderColor:col, backgroundColor:col+'10',
+      borderWidth:isCrit?2:1, pointRadius:0, fill:false, tension:.3,
+      borderDash:isCrit?[]:[4,3],
+      _conjId:c.debris_id, _conjName:c.debris_name,
+    };
+  });
+
+  datasets.push({label:'5km safe',data:times.map(()=>5),borderColor:'#22c55e50',borderDash:[6,3],borderWidth:1,pointRadius:0,fill:false});
+  datasets.push({label:'2km critical',data:times.map(()=>2),borderColor:'#ef444480',borderDash:[3,3],borderWidth:1.5,pointRadius:0,fill:false});
+
+  tlChart=new Chart(document.getElementById('tl-chart').getContext('2d'),{
+    type:'line',data:{labels:times,datasets},
+    options:{
+      responsive:true,maintainAspectRatio:false,
+      interaction:{mode:'index',intersect:false},
+      plugins:{
+        legend:{display:conjs.length<=12,labels:{color:'#94a3b8',font:{size:8},boxWidth:8,padding:3,
+          filter:i=>!i.text.includes('km safe')&&!i.text.includes('km critical')}},
+        tooltip:{backgroundColor:'#0a1628',borderColor:'#1e3a5f',borderWidth:1,
+          titleColor:'#e2e8f0',bodyColor:'#94a3b8',
+          callbacks:{label:ctx=>`${ctx.dataset.label}: ${Number(ctx.parsed.y).toFixed(3)} km`}}
+      },
+      scales:{
+        x:{ticks:{color:'#475569',font:{size:8},maxTicksLimit:10},grid:{color:'#1e3a5f30'},
+           title:{display:true,text:'Time (hours)',color:'#64748b',font:{size:9}}},
+        y:{ticks:{color:'#475569',font:{size:8}},grid:{color:'#1e3a5f30'},min:0,
+           title:{display:true,text:'Distance from Primary (km)',color:'#64748b',font:{size:9}}}
+      }
+    }
+  });
+
+  // ── Miss distance table — clickable rows show individual chart ─────────────
+  const card=document.getElementById('tl-chart').closest('.card');
+  let ex=card.querySelector('.miss-table'); if(ex) ex.remove();
+  const tbl=document.createElement('div');
+  tbl.className='miss-table';
+  tbl.style.cssText='margin-top:10px;max-height:200px;overflow-y:auto;';
+
+  // Real Pc formatter — parse from scientific string if pc_raw not present
+  const parsePc=c=>{
+    if(c.pc_raw!=null&&c.pc_raw>0) return c.pc_raw;
+    if(!c.pc_scientific) return null;
+    try{
+      const s=c.pc_scientific.toString()
+        .replace(/×\s*10\^?/,'e').replace(/[×x]\s*10/,'e')
+        .replace(/⁻(\d+)/,'-$1').replace(/\^-/,'e-').replace(/\s/g,'');
+      const v=parseFloat(s);
+      return isNaN(v)?null:v;
+    }catch{return null;}
+  };
+
+  const fmtPc=c=>{
+    const v=parsePc(c);
+    if(v==null) return '—';
+    if(v===0) return '< 10⁻¹⁰ (effectively 0)';
+    if(v<1e-10) return v.toExponential(2)+' (negligible)';
+    if(v<1e-3) return v.toExponential(2);
+    return v.toFixed(4);
+  };
+
+  tbl.innerHTML=`<div style="font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:5px">
+    Miss Distances — All ${conjs.length} Objects &nbsp;<span style="font-weight:400;color:#475569">(click row to view distance graph)</span></div>
+    <table style="font-size:10px;width:100%;border-collapse:collapse">
+      <tr style="color:var(--muted)"><th style="text-align:left;padding:3px 6px">Object</th><th>Risk</th><th style="text-align:right">Miss km</th><th style="text-align:right">TCA h</th><th style="text-align:right">Pc (collision probability)</th></tr>
+      ${sorted.map((c,i)=>{
+        const col=RISK_LINE[c.risk_level]||'#475569';
+        const pcDisp=fmtPc(c);
+        return `<tr class="tc" style="cursor:pointer;border-bottom:1px solid #1e3a5f20" onclick="showDebrisDistChart(${i})" onmouseover="this.style.background='${col}12'" onmouseout="this.style.background='transparent'">
+          <td style="padding:4px 6px;max-width:130px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#e2e8f0" title="${c.debris_name}">${c.debris_name}</td>
+          <td style="padding:4px 6px;text-align:center"><span style="color:${col};font-weight:700;font-size:9px">${c.risk_level}</span></td>
+          <td style="text-align:right;padding:4px 6px;color:${col};font-family:monospace;font-weight:700">${c.miss_distance_km}</td>
+          <td style="text-align:right;padding:4px 6px;color:var(--muted);font-family:monospace">${c.tca_hours}</td>
+          <td style="text-align:right;padding:4px 6px;font-family:monospace;color:${parsePc(c)>1e-4?'#f87171':parsePc(c)>1e-5?'#fb923c':'#94a3b8'}">${pcDisp}</td>
+        </tr>`;
+      }).join('')}
+    </table>`;
+  card.appendChild(tbl);
+
+  // Store data for per-debris chart
+  card._conjData=conjData;
+  card._times=times;
+}
+
+// Per-debris distance chart on row click
+let debrisSubChart=null;
+function showDebrisDistChart(idx){
+  const card=document.getElementById('tl-chart').closest('.card');
+  const cd=card._conjData; const times=card._times;
+  if(!cd||!cd[idx]) return;
+  const {conj:c, dist}=cd[idx];
+  if(!dist?.length){
+    document.getElementById('tl-debris-chart-panel').style.display='none';
+    return;
+  }
+
+  const RISK_LINE={'CRITICAL':'#ef4444','HIGH':'#f97316','MEDIUM':'#eab308','LOW':'#22c55e','NONE':'#475569'};
+  const col=RISK_LINE[c.risk_level]||'#475569';
+
+  document.getElementById('tl-debris-chart-panel').style.display='block';
+  document.getElementById('tl-debris-title').innerHTML=
+    `<span style="color:${col}">${c.debris_name}</span> — Distance to Primary`;
+
+  // Min distance point
+  let minIdx=0,minVal=Infinity;
+  dist.forEach((v,i)=>{if(v!=null&&v<minVal){minVal=v;minIdx=i;}});
+  const ptR=dist.map((_,i)=>i===minIdx?7:0);
+  const ptC=dist.map((_,i)=>i===minIdx?col:'transparent');
+
+  if(debrisSubChart) debrisSubChart.destroy();
+  debrisSubChart=new Chart(document.getElementById('tl-debris-chart').getContext('2d'),{
+    type:'line',
+    data:{labels:times, datasets:[
+      {label:c.debris_name, data:dist, borderColor:col, backgroundColor:col+'15',
+       borderWidth:2, pointRadius:ptR, pointBackgroundColor:ptC, pointBorderColor:ptC,
+       fill:true, tension:.3},
+      {label:'2km danger',data:times.map(()=>2),borderColor:'#ef444460',borderDash:[4,3],borderWidth:1,pointRadius:0,fill:false},
+    ]},
+    options:{
+      responsive:true, maintainAspectRatio:false,
+      plugins:{
+        legend:{display:true,labels:{color:'#94a3b8',font:{size:9},boxWidth:8}},
+        tooltip:{backgroundColor:'#0a1628',borderColor:col,borderWidth:1,
+          callbacks:{label:ctx=>`${ctx.dataset.label}: ${ctx.parsed.y?.toFixed(3)} km`}}
+      },
+      scales:{
+        x:{ticks:{color:'#475569',font:{size:8},maxTicksLimit:10},grid:{color:'#1e3a5f20'},
+          title:{display:true,text:'Time (h)',color:'#64748b',font:{size:9}}},
+        y:{ticks:{color:'#475569',font:{size:8},callback:v=>v.toFixed(1)+' km'},grid:{color:'#1e3a5f20'},min:0,
+          title:{display:true,text:'Distance (km)',color:'#64748b',font:{size:9}}}
+      }
+    }
+  });
+
+  // Stats
+  const pcDisp=c.pc_scientific||'—';
+  document.getElementById('tl-debris-stats').innerHTML=[
+    {l:'Min Distance',v:(minVal<0.1?(minVal*1000).toFixed(0)+'m':minVal.toFixed(3)+'km'),col},
+    {l:'TCA',v:`T+${c.tca_hours}h`,col:'#94a3b8'},
+    {l:'Rel. Velocity',v:`${c.relative_velocity_kms} km/s`,col:'#94a3b8'},
+    {l:'Pc (collision prob)',v:pcDisp,col:c.risk_level==='CRITICAL'?'#f87171':c.risk_level==='HIGH'?'#fb923c':'#94a3b8'},
+    {l:'Risk',v:c.risk_level,col},
+    {l:'Source',v:c.source||'—',col:'#64748b'},
+  ].map(s=>`<div><span style="color:#475569">${s.l}:</span> <strong style="color:${s.col}">${s.v}</strong></div>`).join('');
+}
+
+// ═══════════════════════════════════════════════════════
+// QUICK CONJUNCTION
+// ═══════════════════════════════════════════════════════
+async function runQC(){
+  const body={
+    primary:{altitude_km:+document.getElementById('qpa').value,inclination_deg:+document.getElementById('qpi').value,eccentricity:+document.getElementById('qpe').value,raan_deg:+document.getElementById('qpr').value,argp_deg:+document.getElementById('qpg').value,true_anomaly_deg:+document.getElementById('qpn').value},
+    secondary:{altitude_km:+document.getElementById('qsa').value,inclination_deg:+document.getElementById('qsi').value,eccentricity:+document.getElementById('qse').value,raan_deg:+document.getElementById('qsr').value,argp_deg:+document.getElementById('qsg').value,true_anomaly_deg:+document.getElementById('qsn').value},
+    duration_hours:+document.getElementById('qcd').value
+  };
+  try{
+    const r=await fetch(API+'/api/conjunction',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
+    const d=await r.json();
+    document.getElementById('qc-res').style.display='block';
+    // Warn if miss=0 (same initial position — elements too similar)
+    if(d.miss_distance_m < 1 && d.tca_seconds < 60){
+      document.getElementById('qc-al').innerHTML=
+        `<div class="alert ay">⚠ Miss distance = 0m at T+0s. The two objects have nearly identical initial positions. Try different RAAN, ArgP or True Anomaly for the secondary to create a distinct orbit.</div>`;
+      document.getElementById('qc-res').style.display='block';
+      document.getElementById('qc-auto').style.display='none';
+      return;
+    }
+    document.getElementById('qc-kv').innerHTML=kv({
+      'Miss Distance':`${d.miss_distance_km}km (${d.miss_distance_m}m)`,
+      'TCA':`${d.tca_hours}h (T+${d.tca_seconds}s)`,
+      'Relative Velocity':`${d.relative_velocity_kms}km/s`,
+      'Probability of Collision':d.pc_scientific,'Risk':d.risk_level,
+      'Close-pass warn threshold':`${d.close_pass_warn_km||1.0}km`,
+      'Action':d.action_required?'⚠ Maneuver required':'✓ No maneuver needed',
+    });
+    document.getElementById('qc-al').innerHTML=d.action_required?
+      `<div class="alert ar">⚠ Maneuver required. Pc=${d.pc_scientific}. Miss=${d.miss_distance_km}km (threshold ≤ ${d.close_pass_warn_km||1.0}km).</div>`:
+      `<div class="alert ag">✅ Safe pass. No maneuver needed. Miss=${d.miss_distance_km}km (threshold ${d.close_pass_warn_km||1.0}km).</div>`;
+    if(qcChart) qcChart.destroy();
+    qcChart=mkChart('qc-chart',d.timeline.times_h,d.timeline.distances_km,'Distance (km)',['#3b82f6','#ef4444'],2);
+
+    // AUTO-MANEUVER: if action required, immediately compute maneuver without user clicking
+    if(d.action_required){
+      document.getElementById('qc-auto').style.display='block';
+      document.getElementById('qc-auto').innerHTML=`<div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">
+        <div class="spinner" style="width:16px;height:16px;border-width:2px"></div>
+        <span style="color:#fb923c;font-weight:600">AUTO-COMPUTING AVOIDANCE MANEUVER… (may take 5-15s on first run while PPO loads)</span></div>`;
+      // Map QC inputs to maneuver planner inputs
+      const mp={
+        primary:{altitude_km:+document.getElementById('qpa').value,inclination_deg:+document.getElementById('qpi').value,eccentricity:+document.getElementById('qpe').value,raan_deg:+document.getElementById('qpr').value,argp_deg:+document.getElementById('qpg').value,true_anomaly_deg:+document.getElementById('qpn').value},
+        debris:{altitude_km:+document.getElementById('qsa').value,inclination_deg:+document.getElementById('qsi').value,eccentricity:+document.getElementById('qse').value,raan_deg:+document.getElementById('qsr').value,argp_deg:+document.getElementById('qsg').value,true_anomaly_deg:+document.getElementById('qsn').value},
+        tca_hours:Math.max(0.1, d.tca_hours||0.1), duration_hours:+document.getElementById('qcd').value,
+        max_dv_ms:5, satellite_mass_kg:300, isp_s:220
+      };
+      try{
+        const ctrl=new AbortController();
+        const manTimer=setTimeout(()=>ctrl.abort(),30000);
+        const mr=await fetch(API+'/api/maneuver',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(mp),signal:ctrl.signal});
+        clearTimeout(manTimer);
+        if(!mr.ok) throw new Error(`Server error ${mr.status}: ${await mr.text()}`);
+        const md=await mr.json();
+        const rec=md.recommended;
+        if(rec){
+          document.getElementById('qc-auto').innerHTML=`
+            <div class="alert ar" style="margin-bottom:8px">
+              🚨 <strong>AUTO-MANEUVER COMPUTED</strong> — No manual action needed. 
+              RL model selected: <strong>${rec.direction}</strong> burn of <strong>${rec.delta_v_ms} m/s</strong> at T+${rec.burn_time_hours}h
+            </div>
+            <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;font-size:11px">
+              <div style="background:#020b14;border:1px solid #22c55e40;border-radius:6px;padding:8px">
+                <div style="color:var(--muted);margin-bottom:3px">Direction</div><strong style="color:#4ade80;text-transform:capitalize">${rec.direction}</strong></div>
+              <div style="background:#020b14;border:1px solid var(--border);border-radius:6px;padding:8px">
+                <div style="color:var(--muted);margin-bottom:3px">ΔV</div><strong>${rec.delta_v_ms} m/s</strong></div>
+              <div style="background:#020b14;border:1px solid var(--border);border-radius:6px;padding:8px">
+                <div style="color:var(--muted);margin-bottom:3px">Post miss</div><strong style="color:#4ade80">${rec.post_maneuver_miss_km} km</strong></div>
+              <div style="background:#020b14;border:1px solid var(--border);border-radius:6px;padding:8px">
+                <div style="color:var(--muted);margin-bottom:3px">Fuel</div><strong>${rec.fuel_kg} kg</strong></div>
+            </div>
+            <div style="margin-top:8px;font-size:11px;color:var(--muted)">
+              PPO reward: ${rec.rl_reward?.total_reward} · Advantage: ${rec.rl_reward?.advantage} · 
+              Post risk: <span class="badge b-${rec.post_maneuver_risk}">${rec.post_maneuver_risk}</span>
+              <br>All 6 strategies: ${(md.plans||[]).map(p=>p.direction+' ('+p.post_maneuver_miss_km+'km)').join(' | ')}
+            </div>`;
+        }
+      }catch(e2){
+        document.getElementById('qc-auto').innerHTML=`<div class="alert ar">Auto-maneuver compute failed: ${e2.message}</div>`;
+      }
+    } else {
+      document.getElementById('qc-auto').style.display='none';
+    }
+  }catch(e){alert('Error: '+e.message);}
+}
+
+// ═══════════════════════════════════════════════════════
+// MANEUVER PLANNER
+// ═══════════════════════════════════════════════════════
+async function runMan(){
+  const body={
+    primary:{altitude_km:+document.getElementById('mpa').value,inclination_deg:+document.getElementById('mpi').value,eccentricity:0.001,raan_deg:+document.getElementById('mpr').value,argp_deg:0,true_anomaly_deg:+document.getElementById('mpn').value},
+    debris:{altitude_km:+document.getElementById('mda').value,inclination_deg:+document.getElementById('mdi').value,eccentricity:0.008,raan_deg:5,argp_deg:180,true_anomaly_deg:+document.getElementById('mdn').value},
+    tca_hours:+document.getElementById('m-tca').value,duration_hours:24,
+    max_dv_ms:+document.getElementById('m-dv').value,
+    satellite_mass_kg:+document.getElementById('m-mass').value,isp_s:220
+  };
+  try{
+    const r=await fetch(API+'/api/maneuver',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
+    const d=await r.json();
+    document.getElementById('man-res').style.display='block';
+    document.getElementById('mn-nom').innerHTML=kv({
+      'Nominal miss distance':d.nominal_miss_km+'km ('+d.nominal_miss_m+'m)',
+      'Nominal Pc':d.nominal_pc?.toExponential(4),'Nominal risk':d.nominal_risk,
+      'Action needed':d.nominal_risk!=='LOW'?'YES — see plans below':'NO — all plans are precautionary',
+    });
+    document.getElementById('mn-plans').innerHTML=(d.plans||[]).map((p,i)=>{
+      const rl=p.rl_reward||{}; const loss=p.rl_loss||{};
+      return `<div class="pc${i===0?' rec':''}">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:5px">
+          <strong style="text-transform:capitalize;font-size:12px">${p.direction}</strong>
+          ${i===0?'<span style="font-size:9px;background:#22c55e20;color:#4ade80;padding:2px 5px;border-radius:3px;font-weight:700">BEST</span>':''}
+          <span class="badge b-${p.post_maneuver_risk}">${p.post_maneuver_risk}</span>
+        </div>
+        <div class="two" style="font-size:10px;gap:8px">
+          <dl class="kvg">${kv({'ΔV':p.delta_v_ms+'m/s','Burn at':'T+'+p.burn_time_hours+'h','Post miss':p.post_maneuver_miss_km+'km','Fuel':p.fuel_kg+'kg','Efficiency':p.efficiency_score+' km/(m/s)','Model':'PPO RL'})}</dl>
+          <dl class="kvg">${kv({'Total reward':rl.total_reward,'Sep bonus':rl.separation_bonus,'Fuel penalty':rl.fuel_penalty,'Advantage':rl.advantage,'L_PPO':loss.L_ppo?.toFixed(6),'L_clip':loss.L_clip?.toFixed(6),'L_vf':loss.L_vf?.toFixed(6)})}</dl>
+        </div>
+       </div>`;
+    }).join('');
+  }catch(e){alert('Error: '+e.message);}
+}
+
+// ═══════════════════════════════════════════════════════
+// CHART HELPER
+// ═══════════════════════════════════════════════════════
+function mkChart(id,labels,data,ylabel,colors,ref){
+  const ctx=document.getElementById(id).getContext('2d');
+  const ds=[{label:ylabel,data,borderColor:colors[0],backgroundColor:colors[0]+'18',
+    borderWidth:2,pointRadius:0,fill:true,tension:.3}];
+  if(ref&&colors[1]) ds.push({label:`${ref}km`,data:labels.map(()=>ref),borderColor:colors[1],borderDash:[4,4],borderWidth:1,pointRadius:0,fill:false});
+  return new Chart(ctx,{type:'line',data:{labels,datasets:ds},
+    options:{responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{labels:{color:'#94a3b8',font:{size:9},boxWidth:9}}},
+      scales:{x:{ticks:{color:'#475569',font:{size:9}},grid:{color:'#1e3a5f40'},
+               title:{display:true,text:'Time (h)',color:'#64748b',font:{size:9}}},
+              y:{ticks:{color:'#475569',font:{size:9}},grid:{color:'#1e3a5f40'},
+               title:{display:true,text:ylabel,color:'#64748b',font:{size:9}}}}}});
+}
+
+// ═══════════════════════════════════════════════════════
+// WATCHLIST — auto-populated from simulation results
+// ═══════════════════════════════════════════════════════
+let watchlistInterval=null;
+
+function populateWatchlist(report){
+  const conjs=report?.conjunctions||[];
+  if(!conjs.length){
+    document.getElementById('wl-empty').style.display='block';
+    document.getElementById('wl-list').innerHTML='';
+    return;
+  }
+  document.getElementById('wl-empty').style.display='none';
+  const simTime=Date.now();
+
+  function renderWL(){
+    const now=Date.now(); const elapsed=(now-simTime)/1000;
+    document.getElementById('wl-list').innerHTML=conjs.map(c=>{
+      const remaining=Math.max(0,c.tca_seconds-elapsed);
+      const h=Math.floor(remaining/3600); const m=Math.floor((remaining%3600)/60); const s=Math.floor(remaining%60);
+      const cls=c.risk_level==='CRITICAL'?'critical':c.risk_level==='HIGH'?'high':'';
+      const col=c.risk_level==='CRITICAL'?'#f87171':c.risk_level==='HIGH'?'#fb923c':c.risk_level==='MEDIUM'?'#fbbf24':'#4ade80';
+      return `<div class="wl-item ${cls}">
+        <div class="countdown" style="color:${col}">${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}</div>
+        <div style="flex:1">
+          <div style="font-weight:600;font-size:12px">${c.debris_name} <span class="badge b-${c.risk_level}">${c.risk_level}</span></div>
+          <div style="font-size:11px;color:var(--muted)">Miss ${c.miss_distance_km}km · Pc=${c.pc_scientific} · Vel ${c.relative_velocity_kms}km/s</div>
+        </div>
+        <div style="text-align:right;font-size:11px;color:var(--muted)">${remaining<=0?'<span style="color:#f87171;font-weight:700">⚠ PASSED</span>':'TCA in'}<br>${remaining>0?c.tca_hours+'h':''}</div>
+        ${c.action_required?`<button class="btn bo bsm" onclick="watchlistManeuver('${c.debris_id}')">Auto Maneuver</button>`:''}
+      </div>`;
+    }).join('');
+  }
+  renderWL();
+  if(watchlistInterval) clearInterval(watchlistInterval);
+  watchlistInterval=setInterval(renderWL,1000);
+
+  // Auto-compute maneuvers for CRITICAL/HIGH
+  const threats=conjs.filter(c=>c.action_required);
+  if(threats.length){
+    document.getElementById('wl-auto-card').style.display='block';
+    document.getElementById('wl-auto-plans').innerHTML=
+      `<div style="color:var(--muted);font-size:11px">Computing maneuvers for ${threats.length} threat(s)…</div>`;
+    // Show recommended plans from simulation
+    const plans=report.maneuver_plans||[];
+    if(plans.length){
+      document.getElementById('wl-auto-plans').innerHTML=plans.slice(0,3).map((p,i)=>
+        `<div class="pc${i===0?' rec':''}">
+          <span class="badge b-${p.post_maneuver_risk}">${p.post_maneuver_risk}</span>
+          <strong style="margin-left:8px;text-transform:capitalize">${p.direction}</strong>
+          — ΔV=${p.delta_v_ms}m/s · Burn T+${p.burn_time_hours}h · Post miss ${p.post_maneuver_miss_km}km · 
+          Fuel ${p.fuel_kg}kg · PPO reward: ${p.rl_reward?.total_reward}
+         </div>`).join('');
+    }
+  }
+}
+
+async function watchlistManeuver(debrisId){
+  // Find the conjunction and auto-trigger maneuver via API
+  const c=currentReport?.conjunctions?.find(x=>x.debris_id===debrisId);
+  if(!c||!currentReport) return;
+  const ps=currentReport.primary_state;
+  const de=c.debris_initial_elements;
+  if(!ps||!de) return;
+  const body={
+    primary:{altitude_km:ps.altitude_km,inclination_deg:ps.inclination_deg,eccentricity:ps.eccentricity||0.001,raan_deg:ps.raan_deg||0,argp_deg:ps.argp_deg||0,true_anomaly_deg:ps.true_anomaly_deg||0},
+    debris:{altitude_km:de.altitude_km,inclination_deg:de.inclination_deg,eccentricity:de.eccentricity||0.001,raan_deg:de.raan_deg||0,argp_deg:de.argp_deg||0,true_anomaly_deg:de.true_anomaly_deg||0},
+    tca_hours:c.tca_hours,duration_hours:currentReport.simulation_duration_hours||12,max_dv_ms:5,satellite_mass_kg:300,isp_s:220
+  };
+  try{
+    const r=await fetch(API+'/api/maneuver',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
+    const d=await r.json();
+    if(d.recommended) alert(`Auto-maneuver for ${c.debris_name}:\n${d.recommended.direction} ${d.recommended.delta_v_ms}m/s at T+${d.recommended.burn_time_hours}h\nPost miss: ${d.recommended.post_maneuver_miss_km}km\nFuel: ${d.recommended.fuel_kg}kg`);
+  }catch(e){alert('Maneuver compute failed: '+e.message);}
+}
+
+// ═══════════════════════════════════════════════════════
+// KESSLER SYNDROME RISK
+// ═══════════════════════════════════════════════════════
+function computeKessler(){
+  const alt   = +document.getElementById('k-alt').value;
+  const width = +document.getElementById('k-width').value;
+  const cs    = +document.getElementById('k-cs').value;
+  const mass  = +document.getElementById('k-mass').value;
+  const n     = +document.getElementById('k-n').value;
+  const rv    = +document.getElementById('k-rv').value * 1000; // m/s
+
+  // Shell volume (km³ → m³)
+  const RE=6378; const r1=(RE+alt)*1000; const r2=(RE+alt+width)*1000;
+  const vol=(4/3)*Math.PI*(r2**3-r1**3);
+
+  // Object density (objects/m³)
+  const rho=n/vol;
+
+  // NASA EVOLVE critical density (Kessler & Cour-Palais 1978)
+  const rho_crit=1e-8/(cs*rv); // approximate
+  const density_ratio=rho/rho_crit;
+
+  // Collision rate (per object per year) = rho * cs * rv * seconds/year
+  const col_rate_per_obj=rho*cs*rv*3.15e7;
+  const total_col_rate=col_rate_per_obj*n/2; // fleet-wide events/year
+
+  // Mean collision energy (J)
+  const mu_reduced=mass/2; // equal mass assumption
+  const E_col=0.5*mu_reduced*rv**2/1e9; // GJ
+
+  // Cascade timescale (very rough)
+  const cascade_years=density_ratio>1?10/density_ratio:9999;
+
+  const risk=density_ratio>2?'CRITICAL':density_ratio>1?'HIGH':density_ratio>0.5?'MEDIUM':'LOW';
+  const risk_col={'CRITICAL':'#f87171','HIGH':'#fb923c','MEDIUM':'#fbbf24','LOW':'#4ade80'};
+  const col=risk_col[risk]||'#4ade80';
+
+  document.getElementById('k-result').style.display='block';
+  document.getElementById('k-risk-val').textContent=risk;
+  document.getElementById('k-risk-val').style.color=col;
+  document.getElementById('k-risk-card').style.borderColor=col+'60';
+  document.getElementById('k-risk-sub').textContent=density_ratio.toFixed(3)+' × critical';
+  document.getElementById('k-rate').textContent=total_col_rate.toExponential(2);
+  document.getElementById('k-crit').textContent=density_ratio.toFixed(4);
+  document.getElementById('k-crit').style.color=density_ratio>1?'#f87171':'#4ade80';
+  document.getElementById('k-time').textContent=cascade_years>1000?'N/A':cascade_years.toFixed(0)+' yr';
+
+  const msgs={
+    CRITICAL:`EMERGENCY: This orbital shell is ABOVE the critical density threshold (${density_ratio.toFixed(2)}× critical). A Kessler cascade is likely. Urgent debris mitigation required.`,
+    HIGH:`WARNING: Object density is approaching the critical threshold (${density_ratio.toFixed(2)}× critical). Active debris removal (ADR) should begin within 10 years.`,
+    MEDIUM:`CAUTION: Density is ${density_ratio.toFixed(2)}× critical. Long-term sustainability is at risk. No-launch zones and deorbit mandates recommended.`,
+    LOW:`SAFE: Current density is ${density_ratio.toFixed(2)}× critical. The shell is self-sustaining. Continue monitoring and maintain 25-year deorbit compliance.`
+  };
+  document.getElementById('k-narr').textContent=msgs[risk]||'';
+  document.getElementById('k-energy').innerHTML=kv({
+    'Collision kinetic energy':E_col.toFixed(2)+' GJ ('+((E_col/4.2).toFixed(0))+' kg TNT equivalent)',
+    'Object density':rho.toExponential(3)+' objects/m³',
+    'Critical density':rho_crit.toExponential(3)+' objects/m³',
+    'Shell volume':vol.toExponential(3)+' m³ ('+width+'km thick at '+alt+'km)',
+    'Collision freq./obj':col_rate_per_obj.toExponential(2)+' events/yr',
+    'Total fleet events':total_col_rate.toExponential(2)+' events/yr',
+    'Mean relative vel':rv.toFixed(0)+' m/s ('+((rv/1000).toFixed(1))+' km/s)',
+    'Fragmentation threshold':mass>10?'This mass ('+mass+'kg) would fragment on impact':'Small object — partial fragmentation',
+  });
+}
+
+// ═══════════════════════════════════════════════════════
+// FLEET MODE
+// ═══════════════════════════════════════════════════════
+let fleet=[];
+
+function addToFleet(){
+  const name=document.getElementById('fl-name').value||`SAT-${fleet.length+1}`;
+  const alt=+document.getElementById('fl-alt').value;
+  const inc=+document.getElementById('fl-inc').value;
+  const raan=+document.getElementById('fl-raan').value;
+  fleet.push({name,alt,inc,raan,ecc:0.001,nu:Math.random()*360});
+  document.getElementById('fleet-count').textContent=fleet.length;
+  document.getElementById('fleet-list').innerHTML=fleet.map((s,i)=>
+    `<div style="display:flex;justify-content:space-between;align-items:center;padding:5px 0;border-bottom:1px solid var(--border);font-size:11px">
+      <span style="color:var(--blue)">${s.name}</span>
+      <span style="color:var(--muted)">${s.alt}km / ${s.inc}°</span>
+      <button class="btn bo bsm" onclick="fleet.splice(${i},1);addToFleet.call({skip:true})">✕</button>
+     </div>`
+  ).join('');
+  // Cycle default values for convenience
+  const names=['SAT-A','SAT-B','SAT-C','SAT-D','SAT-E'];
+  document.getElementById('fl-name').value=names[fleet.length]||`SAT-${fleet.length+1}`;
+  document.getElementById('fl-raan').value=(+document.getElementById('fl-raan').value+45)%360;
+  document.getElementById('fl-inc').value=Math.min(360,+document.getElementById('fl-inc').value+rng_offset());
+}
+
+function rng_offset(){return [0,5,-5,10,-3][fleet.length%5];}
+function clearFleet(){fleet=[];document.getElementById('fleet-count').textContent=0;document.getElementById('fleet-list').innerHTML='';}
+
+async function screenFleet(){
+  if(fleet.length===0){alert('Add satellites to your fleet first.');return;}
+  document.getElementById('fleet-results').style.display='block';
+  document.getElementById('fleet-grid').innerHTML=fleet.map(s=>
+    `<div class="fleet-card" id="fc-${s.name}">
+      <div style="font-weight:600;color:var(--blue);margin-bottom:4px">${s.name}</div>
+      <div style="font-size:10px;color:var(--muted)">${s.alt}km / ${s.inc}°</div>
+      <div style="font-size:10px;color:var(--muted);margin-top:3px" id="fc-status-${s.name}">⏳ Screening…</div>
+     </div>`
+  ).join('');
+
+  for(const sat of fleet){
+    try{
+      const body={satellite_name:sat.name,elements:{altitude_km:sat.alt,inclination_deg:sat.inc,eccentricity:sat.ecc,raan_deg:sat.raan,argp_deg:0,true_anomaly_deg:sat.nu},duration_hours:12,max_dv_ms:5,satellite_mass_kg:300,satellite_isp_s:220,screening_distance_km:10,use_live_tle:true,use_synthetic:false,max_live_debris:300};
+      const r=await fetch(API+'/api/simulate',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
+      if(!r.ok)throw new Error('API error');
+      const d=await r.json();
+      const el=document.getElementById('fc-'+sat.name);
+      const st=document.getElementById('fc-status-'+sat.name);
+      const risk=d.critical_count>0?'CRITICAL':d.high_count>0?'HIGH':d.medium_count>0?'MEDIUM':'LOW';
+      const col={'CRITICAL':'#f87171','HIGH':'#fb923c','MEDIUM':'#fbbf24','LOW':'#4ade80'}[risk];
+      if(el){el.style.borderColor=col+'60';el.onclick=()=>showFleetDetail(d,sat.name);}
+      if(st) st.innerHTML=`<span style="color:${col};font-weight:600">${risk}</span> · ${d.conjunctions.length} conj.${d.maneuver_needed?' · ⚠ MANEUVER':''}`;
+    }catch(e){
+      const st=document.getElementById('fc-status-'+sat.name);
+      if(st) st.textContent='Error: '+e.message;
+    }
+  }
+}
+
+function showFleetDetail(report,name){
+  document.getElementById('fleet-detail').style.display='block';
+  document.querySelectorAll('.fleet-card').forEach(c=>c.classList.remove('sel'));
+  document.getElementById('fc-'+name)?.classList.add('sel');
+  const conjs=report.conjunctions||[];
+  const rec=report.recommended_plan;
+  document.getElementById('fleet-detail-content').innerHTML=`
+    <dl class="kvg" style="margin-bottom:10px">${kv({
+      'Satellite':name,'Altitude':report.primary_state?.altitude_km+'km',
+      'Conjunctions':conjs.length,'Critical':report.critical_count,'High':report.high_count,
+      'Maneuver needed':report.maneuver_needed?'YES ⚠':'NO ✓',
+    })}</dl>
+    ${rec?`<div class="alert ar"><strong>Auto-Maneuver:</strong> ${rec.direction} ${rec.delta_v_ms}m/s at T+${rec.burn_time_hours}h · Post miss ${rec.post_maneuver_miss_km}km · Fuel ${rec.fuel_kg}kg</div>`:'<div class="alert ag">No maneuver required.</div>'}
+    ${conjs.length?`<div style="margin-top:8px;font-size:11px">${conjs.map(c=>`<span class="badge b-${c.risk_level}" style="margin-right:5px">${c.debris_name}: ${c.miss_distance_km}km</span>`).join('')}</div>`:''}`;
+}
+
+// Hook watchlist into processReport
+const _origProcess=processReport;
+// override processReport
+processReport=function(data){currentReport=data;renderTechnicalReport(data);renderNarrativeReport(data);loadAnimationData(data);autoManeuverAlert(data);populateWatchlist(data);};
+// ═══════════════════════════════════════════════════════
+// INIT
+// ═══════════════════════════════════════════════════════
+gp('dashboard');
+</script>
+</body>
+</html>

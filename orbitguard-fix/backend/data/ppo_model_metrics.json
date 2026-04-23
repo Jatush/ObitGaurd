@@ -1,0 +1,323 @@
+{
+  "training": {
+    "n_episodes": 300,
+    "total_steps": 330,
+    "training_time_s": 3.69,
+    "episodes_per_sec": 81.29,
+    "device": "cuda"
+  },
+  "reward": {
+    "mean": 1.701,
+    "std": 0.4713,
+    "min": 1.4701,
+    "max": 3.1126,
+    "final_50_mean": 1.7333,
+    "improvement": 0.1302,
+    "curve": [
+      {
+        "episode": 7,
+        "mean_reward": 1.5417,
+        "std_reward": 0.0293,
+        "min_reward": 1.4759,
+        "max_reward": 1.5563,
+        "success_rate": 1.0
+      },
+      {
+        "episode": 22,
+        "mean_reward": 1.5405,
+        "std_reward": 0.0317,
+        "min_reward": 1.4714,
+        "max_reward": 1.5563,
+        "success_rate": 1.0
+      },
+      {
+        "episode": 37,
+        "mean_reward": 1.7528,
+        "std_reward": 0.534,
+        "min_reward": 1.4703,
+        "max_reward": 3.1126,
+        "success_rate": 1.0
+      },
+      {
+        "episode": 52,
+        "mean_reward": 1.5463,
+        "std_reward": 0.0256,
+        "min_reward": 1.4764,
+        "max_reward": 1.5563,
+        "success_rate": 1.0
+      },
+      {
+        "episode": 67,
+        "mean_reward": 1.6551,
+        "std_reward": 0.3899,
+        "min_reward": 1.4832,
+        "max_reward": 3.1126,
+        "success_rate": 1.0
+      },
+      {
+        "episode": 82,
+        "mean_reward": 2.0608,
+        "std_reward": 0.7442,
+        "min_reward": 1.479,
+        "max_reward": 3.1126,
+        "success_rate": 1.0
+      },
+      {
+        "episode": 97,
+        "mean_reward": 1.8472,
+        "std_reward": 0.6335,
+        "min_reward": 1.472,
+        "max_reward": 3.1125,
+        "success_rate": 1.0
+      },
+      {
+        "episode": 112,
+        "mean_reward": 1.6388,
+        "std_reward": 0.3954,
+        "min_reward": 1.471,
+        "max_reward": 3.1125,
+        "success_rate": 1.0
+      },
+      {
+        "episode": 127,
+        "mean_reward": 1.9712,
+        "std_reward": 0.6881,
+        "min_reward": 1.5557,
+        "max_reward": 3.1126,
+        "success_rate": 1.0
+      },
+      {
+        "episode": 142,
+        "mean_reward": 1.66,
+        "std_reward": 0.3882,
+        "min_reward": 1.5562,
+        "max_reward": 3.1126,
+        "success_rate": 1.0
+      },
+      {
+        "episode": 157,
+        "mean_reward": 1.6493,
+        "std_reward": 0.392,
+        "min_reward": 1.4728,
+        "max_reward": 3.1124,
+        "success_rate": 1.0
+      },
+      {
+        "episode": 172,
+        "mean_reward": 1.6502,
+        "std_reward": 0.3916,
+        "min_reward": 1.4821,
+        "max_reward": 3.1125,
+        "success_rate": 1.0
+      },
+      {
+        "episode": 187,
+        "mean_reward": 1.6553,
+        "std_reward": 0.3898,
+        "min_reward": 1.4861,
+        "max_reward": 3.1125,
+        "success_rate": 1.0
+      },
+      {
+        "episode": 202,
+        "mean_reward": 1.7438,
+        "std_reward": 0.5378,
+        "min_reward": 1.4766,
+        "max_reward": 3.1126,
+        "success_rate": 1.0
+      },
+      {
+        "episode": 217,
+        "mean_reward": 1.6466,
+        "std_reward": 0.3927,
+        "min_reward": 1.4882,
+        "max_reward": 3.1126,
+        "success_rate": 1.0
+      },
+      {
+        "episode": 232,
+        "mean_reward": 1.6555,
+        "std_reward": 0.3898,
+        "min_reward": 1.4888,
+        "max_reward": 3.1126,
+        "success_rate": 1.0
+      },
+      {
+        "episode": 247,
+        "mean_reward": 1.6488,
+        "std_reward": 0.3923,
+        "min_reward": 1.4701,
+        "max_reward": 3.1126,
+        "success_rate": 1.0
+      },
+      {
+        "episode": 262,
+        "mean_reward": 1.6382,
+        "std_reward": 0.3957,
+        "min_reward": 1.4701,
+        "max_reward": 3.1126,
+        "success_rate": 1.0
+      },
+      {
+        "episode": 277,
+        "mean_reward": 1.7533,
+        "std_reward": 0.5338,
+        "min_reward": 1.4732,
+        "max_reward": 3.1126,
+        "success_rate": 1.0
+      },
+      {
+        "episode": 292,
+        "mean_reward": 1.7638,
+        "std_reward": 0.529,
+        "min_reward": 1.5562,
+        "max_reward": 3.1126,
+        "success_rate": 1.0
+      }
+    ]
+  },
+  "loss": {
+    "policy_loss_mean": -0.003149,
+    "policy_loss_final": -0.003149,
+    "value_loss_mean": 0.416756,
+    "value_loss_final": 0.416756,
+    "entropy_mean": 1.790316,
+    "entropy_final": 1.790316,
+    "approx_kl_mean": 0.001391,
+    "clip_fraction": 0.0045,
+    "converged": true,
+    "policy_loss_curve": [
+      -0.003149
+    ],
+    "value_loss_curve": [
+      0.416756
+    ],
+    "entropy_curve": [
+      1.790316
+    ],
+    "kl_curve": [
+      0.001391
+    ]
+  },
+  "task_metrics": {
+    "success_rate": 1.0,
+    "collision_rate": 0.0,
+    "success_definition": "final_miss_km >= 5.0",
+    "collision_definition": "final_miss_km < 1.0"
+  },
+  "miss_distance": {
+    "mean_km": 6.037,
+    "std_km": 2.948,
+    "median_km": 5.0,
+    "max_km": 19.907,
+    "percentiles": {
+      "p10": 5.0,
+      "p25": 5.0,
+      "p50": 5.0,
+      "p75": 5.0,
+      "p90": 9.618,
+      "p95": 12.628,
+      "p99": 19.076
+    }
+  },
+  "evaluation": {
+    "n_eval_episodes": 60,
+    "mean_reward": 1.674,
+    "std_reward": 0.4347,
+    "success_rate": 1.0,
+    "mean_miss_km": 6.286,
+    "median_miss_km": 5.0
+  },
+  "ppo": {
+    "algorithm": "PPO (Proximal Policy Optimization)",
+    "framework": "PyTorch 2.5.1+cu121",
+    "device": "cuda",
+    "clip_epsilon": 0.2,
+    "gae_lambda": 0.95,
+    "gamma": 0.99,
+    "lr_actor": 0.0003,
+    "lr_critic": 0.001,
+    "n_epochs_per_update": 10,
+    "batch_size": 256,
+    "rollout_steps": 2048,
+    "target_kl": 0.015,
+    "c1_value_coeff": 0.5,
+    "c2_entropy_coeff": 0.01,
+    "loss_formula": "L = L_CLIP + c1\u00b7L_VF \u2212 c2\u00b7H",
+    "policy_arch": "MLP 9\u2192256\u2192256\u2192128\u21926 (tanh, Categorical)",
+    "value_arch": "MLP 9\u2192256\u2192256\u2192128\u21921 (tanh, linear)",
+    "n_parameters_actor": 102022,
+    "n_parameters_critic": 101377,
+    "n_parameters_total": 203399,
+    "optimizer": "Adam (eps=1e-5) + linear LR decay",
+    "grad_clip": 0.5,
+    "weight_init": "Orthogonal (gain=\u221a2 hidden, 0.01 actor head, 1.0 critic head)"
+  },
+  "timestamp": "2026-04-22T15:09:56Z",
+  "model_comparison": {
+    "random": {
+      "mean_reward": 1.7385,
+      "std_reward": 0.5201,
+      "success_rate": 1.0,
+      "mean_miss_km": 6.367,
+      "median_miss_km": 5.0,
+      "accuracy": 1.0,
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1_score": 1.0,
+      "n_episodes": 200,
+      "tp": 200,
+      "fp": 0,
+      "fn": 0,
+      "tn": 0
+    },
+    "greedy_prograde": {
+      "mean_reward": 1.6833,
+      "std_reward": 0.4504,
+      "success_rate": 1.0,
+      "mean_miss_km": 6.393,
+      "median_miss_km": 5.0,
+      "accuracy": 1.0,
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1_score": 1.0,
+      "n_episodes": 200,
+      "tp": 200,
+      "fp": 0,
+      "fn": 0,
+      "tn": 0
+    },
+    "debris_directed": {
+      "mean_reward": 1.6732,
+      "std_reward": 0.4397,
+      "success_rate": 1.0,
+      "mean_miss_km": 6.499,
+      "median_miss_km": 5.0,
+      "accuracy": 1.0,
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1_score": 1.0,
+      "n_episodes": 200,
+      "tp": 200,
+      "fp": 0,
+      "fn": 0,
+      "tn": 0
+    },
+    "ppo_trained": {
+      "mean_reward": 1.7866,
+      "std_reward": 0.5685,
+      "success_rate": 1.0,
+      "mean_miss_km": 6.135,
+      "median_miss_km": 5.0,
+      "accuracy": 1.0,
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1_score": 1.0,
+      "n_episodes": 200,
+      "tp": 200,
+      "fp": 0,
+      "fn": 0,
+      "tn": 0
+    }
+  }
+}
