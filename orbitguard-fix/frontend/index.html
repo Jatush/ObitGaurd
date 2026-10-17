@@ -629,7 +629,7 @@ td{padding:8px 10px;border-bottom:1px solid #1e3a5f20;font-size:12px}tr:hover td
 // ═══════════════════════════════════════════════════════
 // STATE
 // ═══════════════════════════════════════════════════════
-const API = 'http://localhost:8000';
+const API = 'https://obitgaurd.onrender.com';
 let currentReport = null;
 let ws = null;
 let simTabMode = 'elem';
@@ -736,7 +736,7 @@ async function loadRecents(){
 // WebSocket
 function connectWS(){
   try{
-    ws=new WebSocket('ws://localhost:8000/ws');
+    ws = new WebSocket('wss://obitgaurd.onrender.com/ws');
     ws.onmessage=e=>{
       const d=JSON.parse(e.data);
       if(d.type==='progress'){
